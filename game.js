@@ -110,6 +110,7 @@ function startGame() {
     roundPool = generateBalancedRounds();
 
     updateScoreboardUI();
+    updateLivesUI();
     nextRound();
 }
 
@@ -203,6 +204,31 @@ function updateScoreboardUI() {
     }
 }
 
+// Update the 3 hearts / chances display on the top left
+function updateLivesUI(justLostLife = false) {
+    const livesContainer = document.getElementById('lives-container');
+    if (!livesContainer) return;
+
+    livesContainer.innerHTML = '';
+    const remainingLives = Math.max(0, MAX_WRONG_ANSWERS - wrongAnswers);
+
+    for (let i = 0; i < MAX_WRONG_ANSWERS; i++) {
+        const heart = document.createElement('span');
+        if (i < remainingLives) {
+            heart.innerText = '❤️';
+        } else {
+            heart.innerText = '💔';
+            // Play a pop/break animation on the newly broken heart
+            if (justLostLife && i === remainingLives) {
+                heart.classList.add('heart-broken');
+            } else {
+                heart.classList.add('opacity-75');
+            }
+        }
+        livesContainer.appendChild(heart);
+    }
+}
+
 // Handle user input
 function handleGuess(operator) {
     // Track consecutive button presses
@@ -258,6 +284,7 @@ function handleGuess(operator) {
     attemptHistory.push(isCorrect);
 
     updateScoreboardUI();
+    updateLivesUI(!isCorrect);
     currentAttempt++;
 
     if (wrongAnswers >= MAX_WRONG_ANSWERS) {
