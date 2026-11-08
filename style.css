@@ -22,36 +22,41 @@ body {
     padding-right: max(24px, env(safe-area-inset-right));
 }
 
-/* Base dot styling */
+/* Base emoji item styling */
 .dot {
     position: absolute;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transform: translate(-50%, -50%);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+    font-size: 28px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
     animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    user-select: none;
+    pointer-events: none;
 }
 
-/* Optimized dot size for 10.2" iPad in landscape orientation */
+/* Ensure fish 🐟 and crab 🦀 are identical in size across platforms */
+.dot.fish,
+.dot.crab {
+    font-size: 28px;
+    line-height: 1;
+}
+
+/* Optimized emoji size for 10.2" iPad in landscape orientation */
 @media (min-width: 768px) and (orientation: landscape) {
     .dot {
-        width: 34px;
-        height: 34px;
-        box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5);
+        width: 44px;
+        height: 44px;
+        font-size: 34px;
     }
-}
-
-/* Tactile 3D appearance for baby pink dots */
-.dot.pink {
-    background: radial-gradient(circle at 35% 35%, #ffd6d6 0%, #F4C2C2 60%, #e29f9f 100%);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-}
-
-/* Tactile 3D appearance for white dots */
-.dot.white {
-    background: radial-gradient(circle at 35% 35%, #ffffff 0%, #f1f5f9 65%, #cbd5e1 100%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    .dot.fish,
+    .dot.crab {
+        font-size: 34px;
+    }
 }
 
 @keyframes popIn {

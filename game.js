@@ -100,12 +100,12 @@ function nextRound() {
         rightCount = smallCount;
     }
 
-    drawDots(leftContainer, leftCount, 'white');
-    drawDots(rightContainer, rightCount, 'pink');
+    drawDots(leftContainer, leftCount, '🐟');
+    drawDots(rightContainer, rightCount, '🦀');
 }
 
-// Draw dots using a strict grid-based coordinate system to prevent overlap and border collision
-function drawDots(container, count, colorClass) {
+// Draw emojis using a strict grid-based coordinate system to prevent overlap and border collision
+function drawDots(container, count, emojiChar) {
     // Create a 5x5 grid (25 cells)
     const rows = 5;
     const cols = 5;
@@ -122,7 +122,7 @@ function drawDots(container, count, colorClass) {
         [cells[i], cells[j]] = [cells[j], cells[i]];
     }
 
-    // Safe inner boundary (percentages) to guarantee dots never touch borders
+    // Safe inner boundary (percentages) to guarantee items never touch borders
     const minX = 14;
     const maxX = 86;
     const minY = 14;
@@ -133,7 +133,8 @@ function drawDots(container, count, colorClass) {
     for (let i = 0; i < count; i++) {
         const dot = document.createElement('div');
         dot.classList.add('dot');
-        dot.classList.add(colorClass);
+        dot.classList.add(emojiChar === '🐟' ? 'fish' : 'crab');
+        dot.textContent = emojiChar;
 
         const cell = cells[i];
 
