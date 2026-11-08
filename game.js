@@ -85,9 +85,9 @@ function nextRound() {
     leftContainer.innerHTML = '';
     rightContainer.innerHTML = '';
 
-    // Generate two distinct groups so the difference is visually clear for a child
-    const smallCount = Math.floor(Math.random() * 6) + 1; // 1 to 6 dots
-    const largeCount = Math.floor(Math.random() * 7) + 14; // 14 to 20 dots
+    // Generate two distinct groups so the difference is visually clear for a child (minimum 2 items)
+    const smallCount = Math.floor(Math.random() * 5) + 2; // 2 to 6 items
+    const largeCount = Math.floor(Math.random() * 7) + 14; // 14 to 20 items
 
     // Use balanced pool: exactly 5 '<' and 5 '>' in every 10-attempt game
     const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.5 ? '<' : '>');
