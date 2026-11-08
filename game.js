@@ -1,7 +1,9 @@
 // Game State
 const MAX_ATTEMPTS = 10;
+const MAX_WRONG_ANSWERS = 3;
 let currentAttempt = 0;
 let score = 0;
+let wrongAnswers = 0;
 let leftCount = 0;
 let rightCount = 0;
 let attemptHistory = [];
@@ -9,6 +11,8 @@ let roundPool = [];
 let lastButtonPressed = null;
 let consecutiveButtonCount = 0;
 let consecutivePointsFromCurrentButton = 0;
+let lastLessOnTop = null;
+let samePositionStreak = 0;
 
 // DOM Elements
 const leftContainer = document.getElementById('left-container');
@@ -55,14 +59,43 @@ function generateBalancedRounds() {
     return shuffled;
 }
 
+// Swap the position of the greater than and lesser than picture buttons
+// so the child actively reads and recognizes the symbols
+function updateButtonPositions() {
+    let lessOnTop = Math.random() < 0.5;
+
+    // Avoid the same button staying on top more than 2 rounds in a row
+    if (lastLessOnTop !== null && lessOnTop === lastLessOnTop) {
+        samePositionStreak++;
+        if (samePositionStreak >= 2) {
+            lessOnTop = !lessOnTop;
+            samePositionStreak = 1;
+        }
+    } else {
+        samePositionStreak = 1;
+    }
+    lastLessOnTop = lessOnTop;
+
+    if (lessOnTop) {
+        centerCol.insertBefore(btnLess, orText);
+        centerCol.appendChild(btnGreater);
+    } else {
+        centerCol.insertBefore(btnGreater, orText);
+        centerCol.appendChild(btnLess);
+    }
+}
+
 // Initialize / Start Game
 function startGame() {
     currentAttempt = 0;
     score = 0;
+    wrongAnswers = 0;
     attemptHistory = [];
     lastButtonPressed = null;
     consecutiveButtonCount = 0;
     consecutivePointsFromCurrentButton = 0;
+    lastLessOnTop = null;
+    samePositionStreak = 0;
 
     // Reset Center Column UI
     btnLess.style.display = 'flex';
@@ -84,6 +117,9 @@ function startGame() {
 function nextRound() {
     leftContainer.innerHTML = '';
     rightContainer.innerHTML = '';
+
+    // Swap button positions each round so child reads the signs
+    updateButtonPositions();
 
     // Generate two distinct groups so the difference is visually clear for a child (minimum 2 items)
     const smallCount = Math.floor(Math.random() * 5) + 2; // 2 to 6 items
@@ -214,21 +250,27 @@ function handleGuess(operator) {
         emoji.remove();
     }, 2000);
 
-    if (isCorrect) score++;
+    if (isCorrect) {
+        score++;
+    } else {
+        wrongAnswers++;
+    }
     attemptHistory.push(isCorrect);
 
     updateScoreboardUI();
     currentAttempt++;
 
-    if (currentAttempt >= MAX_ATTEMPTS) {
-        endGame();
+    if (wrongAnswers >= MAX_WRONG_ANSWERS) {
+        endGame(true); // Game Over if 3 wrong answers
+    } else if (currentAttempt >= MAX_ATTEMPTS) {
+        endGame(false);
     } else {
         nextRound();
     }
 }
 
 // Show Game Over inline within the center column
-function endGame() {
+function endGame(isThreeStrikes = false) {
     // Hide the middle buttons & the "OR" text
     btnLess.style.display = 'none';
     btnGreater.style.display = 'none';
@@ -242,8 +284,12 @@ function endGame() {
     gameOverMsg.className = 'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center bg-slate-800/95 backdrop-blur-md p-6 md:p-8 rounded-3xl border-4 border-slate-600 shadow-[0_0_40px_rgba(0,0,0,0.85)] z-50 w-72 md:w-80';
     gameOverMsg.style.animation = 'popIn 1s ease-out forwards';
 
+    const title = isThreeStrikes ? 'Game Over!' : (score >= 8 ? '🎉 Amazing Job!' : '🎉 Game Over!');
+    const reason = isThreeStrikes ? '<div class="text-rose-400 font-extrabold text-sm md:text-base uppercase tracking-wider mb-2">❌ 3 Wrong Answers</div>' : '';
+
     gameOverMsg.innerHTML = `
-        <div class="text-3xl md:text-4xl font-black text-white mb-2 whitespace-nowrap">🎉 Game Over!</div>
+        <div class="text-3xl md:text-4xl font-black text-white mb-2 whitespace-nowrap">${title}</div>
+        ${reason}
         <div class="text-2xl md:text-3xl text-emerald-400 font-extrabold whitespace-nowrap mb-6">Score: ${score} / ${MAX_ATTEMPTS}</div>
         <button onclick="startGame()" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 active:scale-95 rounded-2xl text-white text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap">Play Again 🔄</button>
     `;
