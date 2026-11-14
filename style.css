@@ -32,6 +32,17 @@ button, .chip-btn, #btn-less, #btn-greater, #lvl-btn-1, #lvl-btn-2 {
     cursor: pointer;
 }
 
+/* Level Switcher 50% Transparency */
+#level-switcher {
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+#level-switcher:hover,
+#level-switcher:active {
+    opacity: 1;
+}
+
 /* Base emoji item styling (Level 2) */
 .dot {
     position: absolute;
