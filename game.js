@@ -156,11 +156,11 @@ function switchLevel(lvl) {
     currentLevel = lvl;
 
     if (currentLevel === 1) {
-        lvlBtn1.className = 'px-4 py-1.5 md:px-5 md:py-2 min-h-[44px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-md flex items-center justify-center';
-        lvlBtn2.className = 'px-4 py-1.5 md:px-5 md:py-2 min-h-[44px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center';
+        lvlBtn1.className = 'px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-md flex items-center justify-center';
+        lvlBtn2.className = 'px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center';
     } else {
-        lvlBtn2.className = 'px-4 py-1.5 md:px-5 md:py-2 min-h-[44px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-md flex items-center justify-center';
-        lvlBtn1.className = 'px-4 py-1.5 md:px-5 md:py-2 min-h-[44px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center';
+        lvlBtn2.className = 'px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-md flex items-center justify-center';
+        lvlBtn1.className = 'px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center';
     }
 
     startGame();
