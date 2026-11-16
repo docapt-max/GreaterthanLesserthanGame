@@ -23,7 +23,7 @@ body {
 }
 
 /* Optimized Touch Targets & Touch Feel for iPad 10.2" Landscape */
-button, .chip-btn, #btn-less, #btn-greater, #lvl-btn-1, #lvl-btn-2 {
+button, .chip-btn, #btn-less, #btn-greater, #lvl-btn-0, #lvl-btn-1, #lvl-btn-2 {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -240,6 +240,101 @@ button, .chip-btn, #btn-less, #btn-greater, #lvl-btn-1, #lvl-btn-2 {
 .heart-broken {
     display: inline-block;
     animation: breakHeart 0.5s ease-out;
+}
+
+/* Level 0: Drag & Drop Drop Slots and Chips */
+.level0-drop-slot {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    min-width: 140px;
+    height: 52px;
+    padding: 4px 14px;
+    border-radius: 9999px;
+    border: 2px dashed rgba(129, 140, 248, 0.45);
+    background-color: rgba(15, 23, 42, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: auto;
+    box-sizing: border-box;
+}
+
+.level0-drop-slot.slot-hover {
+    border-color: #818cf8;
+    background-color: rgba(99, 102, 241, 0.25);
+    transform: translateX(-50%) scale(1.06);
+    box-shadow: 0 0 22px rgba(99, 102, 241, 0.65);
+}
+
+.box-hover-active {
+    border-color: #818cf8 !important;
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.5), inset 0 0 25px rgba(99, 102, 241, 0.2) !important;
+}
+
+.box-correct {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.55), inset 0 0 20px rgba(16, 185, 129, 0.2) !important;
+}
+
+.box-wrong {
+    border-color: #f43f5e !important;
+    box-shadow: 0 0 30px rgba(244, 63, 94, 0.55), inset 0 0 20px rgba(244, 63, 94, 0.2) !important;
+}
+
+.draggable-chip {
+    touch-action: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    cursor: grab;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.draggable-chip:active {
+    cursor: grabbing;
+}
+
+.drag-ghost {
+    position: fixed !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+    transform: translate(-50%, -50%) scale(1.08) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.65), 0 0 25px rgba(99, 102, 241, 0.7) !important;
+    transition: none !important;
+}
+
+.chip-selected {
+    border-color: #a5b4fc !important;
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.85) !important;
+    animation: chipPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes chipPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+}
+
+.placed-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 900;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.placed-chip:hover {
+    transform: scale(1.04);
 }
 
 /* Portrait helper overlay for iPad when held vertically */

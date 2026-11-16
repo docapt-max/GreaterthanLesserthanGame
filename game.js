@@ -2,7 +2,7 @@
 const MAX_ATTEMPTS = 10;
 const MAX_WRONG_ANSWERS = 3;
 
-let currentLevel = 1; // Default to Level 1
+let currentLevel = 0; // Default to Level 0 (starts before Level 1)
 let currentAttempt = 0;
 let score = 0;
 let wrongAnswers = 0;
@@ -15,6 +15,11 @@ let lastLessOnTop = null;
 let samePositionStreak = 0;
 let isAnsweringBlocked = false;
 let isWaitingForNext = false;
+
+// Level 0 Variables
+let level0Targets = { left: '', right: '' };
+let placedChips = { left: null, right: null };
+let selectedChip = null;
 
 // Level 2 Variables
 let leftCount = 0;
@@ -31,6 +36,7 @@ const orText = document.getElementById('or-text');
 const chipsContainer = document.getElementById('chips-container');
 const questionSentence = document.getElementById('question-sentence');
 const playArea = document.getElementById('play-area');
+const lvlBtn0 = document.getElementById('lvl-btn-0');
 const lvlBtn1 = document.getElementById('lvl-btn-1');
 const lvlBtn2 = document.getElementById('lvl-btn-2');
 
@@ -58,6 +64,13 @@ function createSquareSvg(colorHex, size) {
     </svg>`;
 }
 
+function createRectangleSvg(colorHex, size) {
+    // Upright rectangle standing on its base (aspect ratio ~1:1.55, width 54, height 84)
+    return `<svg viewBox="0 0 100 100" style="width:${size}px; height:${size}px;" class="shape-svg">
+        <rect x="23" y="8" width="54" height="84" rx="8" fill="${colorHex}" stroke="rgba(255,255,255,0.35)" stroke-width="4" />
+    </svg>`;
+}
+
 function createTriangleSvg(colorHex, size) {
     // Equilateral triangle (side ~84, height ~72.7 centered in 100x100)
     return `<svg viewBox="0 0 100 100" style="width:${size}px; height:${size}px;" class="shape-svg">
@@ -75,6 +88,7 @@ function createPentagonSvg(colorHex, size) {
 const SHAPES = [
     { type: 'circle', name: 'circle', render: createCircleSvg },
     { type: 'square', name: 'square', render: createSquareSvg },
+    { type: 'rectangle', name: 'rectangle', render: createRectangleSvg },
     { type: 'triangle', name: 'triangle', render: createTriangleSvg },
     { type: 'pentagon', name: 'pentagon', render: createPentagonSvg }
 ];
@@ -150,24 +164,28 @@ const LEVEL_2_ITEMS = [
     { emoji: '🦀', name: 'Crabs' }
 ];
 
-// Switch between Level 1 and Level 2
+// Update Level Switcher active state
+function updateLevelButtonsUI() {
+    const activeClasses = 'px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-md flex items-center justify-center';
+    const inactiveClasses = 'px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center';
+
+    if (lvlBtn0) lvlBtn0.className = (currentLevel === 0) ? activeClasses : inactiveClasses;
+    if (lvlBtn1) lvlBtn1.className = (currentLevel === 1) ? activeClasses : inactiveClasses;
+    if (lvlBtn2) lvlBtn2.className = (currentLevel === 2) ? activeClasses : inactiveClasses;
+}
+
+// Switch between Level 0, Level 1, and Level 2
 function switchLevel(lvl) {
     if (currentLevel === lvl) return;
     currentLevel = lvl;
-
-    if (currentLevel === 1) {
-        lvlBtn1.className = 'px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-md flex items-center justify-center';
-        lvlBtn2.className = 'px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center';
-    } else {
-        lvlBtn2.className = 'px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-md flex items-center justify-center';
-        lvlBtn1.className = 'px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center';
-    }
-
+    updateLevelButtonsUI();
     startGame();
 }
 
-// Calculate shape sizes ensuring smaller shape is 50% or less of the larger shape (difference >= 50%)
-function getShapeSizes() {
+// Calculate shape sizes ensuring smaller shape meets the required size difference
+// In Level 0: 2D surface area difference is guaranteed to be a minimum of 85%
+// Math: Area_ratio = (small / big)^2 <= (1 - 0.85) = 0.15 => small / big <= sqrt(0.15) ≈ 0.3873
+function getShapeSizes(lvl = currentLevel) {
     const boxRect = leftContainer.getBoundingClientRect();
     const minDim = Math.min(boxRect.width || 380, boxRect.height || 380);
 
@@ -176,8 +194,9 @@ function getShapeSizes() {
     if (bigSize < 180) bigSize = 180;
     if (bigSize > 220) bigSize = 220;
 
-    // Small shape is 48% of big shape (making difference at least 52% >= 50%)
-    const smallSize = Math.round(bigSize * 0.48);
+    // Linear ratio: 0.38 for Level 0 ensures 2D surface area difference is >= 85.5% (minimum 85%)
+    const linearRatio = (lvl === 0) ? 0.38 : 0.48;
+    const smallSize = Math.floor(bigSize * linearRatio);
 
     return { bigSize, smallSize };
 }
@@ -219,6 +238,8 @@ function startGame() {
     samePositionStreak = 0;
     isAnsweringBlocked = false;
     isWaitingForNext = false;
+    placedChips = { left: null, right: null };
+    selectedChip = null;
 
     // Reset Next Button & Scoreboard Tap State
     const nextBtn = document.getElementById('next-btn');
@@ -236,8 +257,20 @@ function startGame() {
     }
 
     // Configure UI based on Level
-    if (currentLevel === 1) {
+    if (currentLevel === 0) {
         centerCol.style.display = 'none';
+        btnLess.style.display = 'none';
+        btnGreater.style.display = 'none';
+        orText.style.display = 'none';
+        questionSentence.style.display = 'none';
+        chipsContainer.style.display = 'flex';
+        roundPool = generateBalancedPool(['left-small', 'left-big']);
+    } else if (currentLevel === 1) {
+        centerCol.style.display = 'none';
+        btnLess.style.display = 'none';
+        btnGreater.style.display = 'none';
+        orText.style.display = 'none';
+        questionSentence.style.display = 'block';
         chipsContainer.style.display = 'flex';
         roundPool = generateBalancedPool(['bigger', 'smaller']);
     } else {
@@ -245,10 +278,12 @@ function startGame() {
         btnLess.style.display = 'flex';
         btnGreater.style.display = 'flex';
         orText.style.display = 'block';
+        questionSentence.style.display = 'block';
         chipsContainer.style.display = 'none';
         roundPool = generateBalancedPool(['<', '>']);
     }
 
+    updateLevelButtonsUI();
     updateScoreboardUI();
     updateLivesUI();
     nextRound();
@@ -258,12 +293,343 @@ function startGame() {
 function nextRound() {
     leftContainer.innerHTML = '';
     rightContainer.innerHTML = '';
+    leftContainer.onclick = null;
+    rightContainer.onclick = null;
+    leftContainer.className = 'relative h-full max-h-[480px] min-h-[320px] game-board flex-1 bg-slate-800 rounded-3xl overflow-hidden border-4 border-slate-600 flex items-center justify-center';
+    rightContainer.className = 'relative h-full max-h-[480px] min-h-[320px] game-board flex-1 bg-slate-800 rounded-3xl overflow-hidden border-4 border-slate-600 flex items-center justify-center';
 
-    if (currentLevel === 1) {
+    if (currentLevel === 0) {
+        setupLevel0Round();
+    } else if (currentLevel === 1) {
         setupLevel1Round();
     } else {
         setupLevel2Round();
     }
+}
+
+// Setup Level 0: Geometric Shapes with Drag and Drop "small" and "big" chips
+function setupLevel0Round() {
+    // 1. Pick geometric shape (circle, square, equilateral triangle, pentagon)
+    const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+
+    // 2. Pick 2 different colors
+    const shuffledColors = [...SHAPE_COLORS].sort(() => Math.random() - 0.5);
+    const leftColor = shuffledColors[0];
+    const rightColor = shuffledColors[1];
+
+    // 3. Determine sizes (Level 0: minimum 85% 2D surface area difference)
+    const { bigSize, smallSize } = getShapeSizes(0);
+
+    // 4. Target from balanced pool
+    const poolTarget = roundPool[currentAttempt] || (Math.random() < 0.5 ? 'left-small' : 'left-big');
+
+    let leftSize, rightSize;
+    if (poolTarget === 'left-small') {
+        leftSize = smallSize;
+        rightSize = bigSize;
+        level0Targets = { left: 'small', right: 'big' };
+    } else {
+        leftSize = bigSize;
+        rightSize = smallSize;
+        level0Targets = { left: 'big', right: 'small' };
+    }
+
+    placedChips = { left: null, right: null };
+    selectedChip = null;
+
+    // 5. Render Shapes in Boxes
+    const leftWrapper = document.createElement('div');
+    leftWrapper.className = 'shape-container';
+    leftWrapper.innerHTML = shape.render(leftColor.hex, leftSize);
+    leftContainer.appendChild(leftWrapper);
+
+    const rightWrapper = document.createElement('div');
+    rightWrapper.className = 'shape-container';
+    rightWrapper.innerHTML = shape.render(rightColor.hex, rightSize);
+    rightContainer.appendChild(rightWrapper);
+
+    // 6. Create Drop Slots inside Boxes at bottom
+    const leftSlot = document.createElement('div');
+    leftSlot.id = 'drop-slot-left';
+    leftSlot.className = 'level0-drop-slot';
+    leftSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here 📥</span>`;
+    leftContainer.appendChild(leftSlot);
+
+    const rightSlot = document.createElement('div');
+    rightSlot.id = 'drop-slot-right';
+    rightSlot.className = 'level0-drop-slot';
+    rightSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here 📥</span>`;
+    rightContainer.appendChild(rightSlot);
+
+    // Enable click-to-place fallback on the containers
+    leftContainer.onclick = () => handleContainerClick('left');
+    rightContainer.onclick = () => handleContainerClick('right');
+
+    // 7. Render "small" and "big" chips in chipsContainer with random order
+    chipsContainer.innerHTML = '';
+    const chipChoices = Math.random() < 0.5 ? ['small', 'big'] : ['big', 'small'];
+
+    chipChoices.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = 'chip-btn draggable-chip min-h-[52px] px-8 py-2.5 md:px-11 md:py-3.5 rounded-full text-xl md:text-2xl font-black bg-slate-800/95 text-indigo-100 hover:text-white border-2 border-indigo-400/90 shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.5)] active:scale-95 transition-all select-none backdrop-blur-sm flex items-center justify-center gap-2';
+        btn.dataset.chip = choice;
+        btn.innerHTML = `<span>${choice}</span>`;
+
+        btn.addEventListener('pointerdown', (e) => initChipDrag(e, choice, btn));
+
+        chipsContainer.appendChild(btn);
+    });
+}
+
+// Level 0 Drag & Drop and Tap Helpers
+function isPointInElement(x, y, elem) {
+    if (!elem) return false;
+    const rect = elem.getBoundingClientRect();
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+}
+
+function setContainerHover(side, isHovering) {
+    const container = side === 'left' ? leftContainer : rightContainer;
+    const slot = document.getElementById(`drop-slot-${side}`);
+    if (!container) return;
+    if (isHovering) {
+        container.classList.add('box-hover-active');
+        if (slot) slot.classList.add('slot-hover');
+    } else {
+        container.classList.remove('box-hover-active');
+        if (slot) slot.classList.remove('slot-hover');
+    }
+}
+
+function clearSelectedChipHighlight() {
+    document.querySelectorAll('.draggable-chip').forEach(btn => {
+        btn.classList.remove('chip-selected');
+    });
+}
+
+function initChipDrag(e, chipType, chipBtn, sourceSide = null) {
+    if (isAnsweringBlocked) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let isDragging = false;
+    let ghostEl = null;
+
+    function onPointerMove(moveEvent) {
+        const curX = moveEvent.clientX;
+        const curY = moveEvent.clientY;
+
+        if (!isDragging) {
+            if (Math.hypot(curX - startX, curY - startY) > 6) {
+                isDragging = true;
+                selectedChip = null;
+                clearSelectedChipHighlight();
+
+                if (sourceSide) {
+                    placedChips[sourceSide] = null;
+                    updateBoxSlotUI(sourceSide);
+                    updateDockChipsUI();
+                }
+
+                ghostEl = document.createElement('div');
+                ghostEl.className = 'chip-btn drag-ghost min-h-[52px] px-8 py-2.5 md:px-11 md:py-3.5 rounded-full text-xl md:text-2xl font-black bg-indigo-600 text-white border-2 border-indigo-300 shadow-2xl flex items-center justify-center';
+                ghostEl.textContent = chipType;
+                ghostEl.style.left = `${curX}px`;
+                ghostEl.style.top = `${curY}px`;
+                document.body.appendChild(ghostEl);
+
+                if (chipBtn) chipBtn.style.opacity = '0.25';
+            }
+        }
+
+        if (isDragging && ghostEl) {
+            ghostEl.style.left = `${curX}px`;
+            ghostEl.style.top = `${curY}px`;
+
+            const isOverLeft = isPointInElement(curX, curY, leftContainer);
+            const isOverRight = isPointInElement(curX, curY, rightContainer);
+
+            setContainerHover('left', isOverLeft);
+            setContainerHover('right', isOverRight);
+        }
+    }
+
+    function onPointerUp(upEvent) {
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+
+        setContainerHover('left', false);
+        setContainerHover('right', false);
+
+        if (isDragging) {
+            if (ghostEl) {
+                ghostEl.remove();
+                ghostEl = null;
+            }
+            if (chipBtn) chipBtn.style.opacity = '1';
+
+            const endX = upEvent.clientX;
+            const endY = upEvent.clientY;
+
+            if (isPointInElement(endX, endY, leftContainer)) {
+                placeChipInBox('left', chipType);
+            } else if (isPointInElement(endX, endY, rightContainer)) {
+                placeChipInBox('right', chipType);
+            } else {
+                updateDockChipsUI();
+            }
+        } else {
+            if (!sourceSide) {
+                handleChipTap(chipType, chipBtn);
+            }
+        }
+    }
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+}
+
+function placeChipInBox(side, chipType) {
+    if (isAnsweringBlocked) return;
+
+    const otherSide = side === 'left' ? 'right' : 'left';
+    if (placedChips[otherSide] === chipType) {
+        placedChips[otherSide] = null;
+        updateBoxSlotUI(otherSide);
+    }
+
+    placedChips[side] = chipType;
+    selectedChip = null;
+    clearSelectedChipHighlight();
+
+    updateBoxSlotUI('left');
+    updateBoxSlotUI('right');
+    updateDockChipsUI();
+
+    if (placedChips.left !== null && placedChips.right !== null) {
+        checkLevel0Answer();
+    }
+}
+
+function removeChipFromBox(side) {
+    if (isAnsweringBlocked) return;
+    placedChips[side] = null;
+    selectedChip = null;
+    clearSelectedChipHighlight();
+    updateBoxSlotUI(side);
+    updateDockChipsUI();
+}
+
+function updateBoxSlotUI(side) {
+    const slot = document.getElementById(`drop-slot-${side}`);
+    if (!slot) return;
+
+    const val = placedChips[side];
+    if (val === null) {
+        slot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here 📥</span>`;
+    } else {
+        slot.innerHTML = '';
+        const chipDiv = document.createElement('div');
+        chipDiv.className = 'placed-chip chip-btn draggable-chip px-6 py-1.5 md:px-8 md:py-2 rounded-full text-base md:text-lg font-black bg-indigo-600 text-white border-2 border-indigo-300 shadow-md flex items-center gap-2 select-none';
+        chipDiv.title = 'Tap to remove or drag to other box';
+        chipDiv.innerHTML = `
+            <span>${val}</span>
+            <span class="text-xs opacity-75 hover:opacity-100 bg-indigo-800/80 rounded-full w-4 h-4 flex items-center justify-center">✕</span>
+        `;
+        chipDiv.onclick = (e) => {
+            e.stopPropagation();
+            removeChipFromBox(side);
+        };
+        chipDiv.addEventListener('pointerdown', (e) => {
+            initChipDrag(e, val, chipDiv, side);
+        });
+        slot.appendChild(chipDiv);
+    }
+}
+
+function updateDockChipsUI() {
+    const chipBtns = chipsContainer.querySelectorAll('.draggable-chip');
+    chipBtns.forEach(btn => {
+        const type = btn.dataset.chip;
+        if (placedChips.left === type || placedChips.right === type) {
+            btn.style.visibility = 'hidden';
+        } else {
+            btn.style.visibility = 'visible';
+            btn.style.opacity = '1';
+        }
+    });
+}
+
+function handleChipTap(chipType, chipBtn) {
+    if (isAnsweringBlocked) return;
+
+    if (selectedChip === chipType) {
+        selectedChip = null;
+        clearSelectedChipHighlight();
+        return;
+    }
+
+    selectedChip = chipType;
+    clearSelectedChipHighlight();
+    chipBtn.classList.add('chip-selected');
+
+    if (placedChips.left === null && placedChips.right !== null) {
+        placeChipInBox('left', chipType);
+    } else if (placedChips.right === null && placedChips.left !== null) {
+        placeChipInBox('right', chipType);
+    }
+}
+
+function handleContainerClick(side) {
+    if (isAnsweringBlocked) return;
+    if (selectedChip) {
+        placeChipInBox(side, selectedChip);
+    }
+}
+
+function checkLevel0Answer() {
+    if (isAnsweringBlocked) return;
+    isAnsweringBlocked = true;
+
+    const isLeftCorrect = (placedChips.left === level0Targets.left);
+    const isRightCorrect = (placedChips.right === level0Targets.right);
+    const isCorrect = isLeftCorrect && isRightCorrect;
+
+    const leftSlot = document.getElementById('drop-slot-left');
+    const rightSlot = document.getElementById('drop-slot-right');
+    const leftPlacedChip = leftSlot ? leftSlot.querySelector('.placed-chip') : null;
+    const rightPlacedChip = rightSlot ? rightSlot.querySelector('.placed-chip') : null;
+
+    if (isCorrect) {
+        if (leftPlacedChip) leftPlacedChip.classList.add('chip-correct');
+        if (rightPlacedChip) rightPlacedChip.classList.add('chip-correct');
+        leftContainer.classList.add('box-correct');
+        rightContainer.classList.add('box-correct');
+        score++;
+    } else {
+        if (!isLeftCorrect && leftPlacedChip) leftPlacedChip.classList.add('chip-wrong');
+        if (!isRightCorrect && rightPlacedChip) rightPlacedChip.classList.add('chip-wrong');
+        if (isLeftCorrect && leftPlacedChip) leftPlacedChip.classList.add('chip-correct');
+        if (isRightCorrect && rightPlacedChip) rightPlacedChip.classList.add('chip-correct');
+
+        if (!isLeftCorrect) leftContainer.classList.add('box-wrong');
+        if (!isRightCorrect) rightContainer.classList.add('box-wrong');
+        wrongAnswers++;
+    }
+
+    attemptHistory.push(isCorrect);
+    showEmojiFeedback(isCorrect);
+    updateScoreboardUI();
+    updateLivesUI(!isCorrect);
+    currentAttempt++;
+
+    setTimeout(() => {
+        showNextPrompt();
+    }, 450);
 }
 
 // Setup Level 1: Geometric Shapes & Sizes
@@ -277,7 +643,7 @@ function setupLevel1Round() {
     const rightColor = shuffledColors[1];
 
     // 3. Determine sizes with at least 50% difference (smaller shape is 48% or less of big shape)
-    const { bigSize, smallSize } = getShapeSizes();
+    const { bigSize, smallSize } = getShapeSizes(1);
 
     // 4. Target from balanced pool: 'bigger' or 'smaller'
     const target = roundPool[currentAttempt] || (Math.random() < 0.5 ? 'bigger' : 'smaller');
@@ -625,9 +991,20 @@ function endGame(isThreeStrikes = false) {
     const title = isThreeStrikes ? 'Game Over!' : (score >= 8 ? '🎉 Amazing Job!' : '🎉 Game Over!');
     const reason = isThreeStrikes ? '<div class="text-rose-400 font-extrabold text-sm md:text-base uppercase tracking-wider mb-2">❌ 3 Wrong Answers</div>' : '';
 
-    const nextLvlBtnHtml = currentLevel === 1
-        ? `<button onclick="switchLevel(2)" class="w-full min-h-[52px] py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 2 ➡️</button>`
-        : `<button onclick="switchLevel(1)" class="w-full min-h-[52px] py-3.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 1 ⬅️</button>`;
+    let nextLvlBtnHtml = '';
+    if (currentLevel === 0) {
+        nextLvlBtnHtml = `<button onclick="switchLevel(1)" class="w-full min-h-[52px] py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 1 ➡️</button>`;
+    } else if (currentLevel === 1) {
+        nextLvlBtnHtml = `
+            <button onclick="switchLevel(2)" class="w-full min-h-[52px] py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 2 ➡️</button>
+            <button onclick="switchLevel(0)" class="w-full min-h-[52px] py-3.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 0 ⬅️</button>
+        `;
+    } else {
+        nextLvlBtnHtml = `
+            <button onclick="switchLevel(1)" class="w-full min-h-[52px] py-3.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 1 ⬅️</button>
+            <button onclick="switchLevel(0)" class="w-full min-h-[52px] py-3.5 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 0 ⬅️</button>
+        `;
+    }
 
     gameOverModal.innerHTML = `
         <div class="text-3xl md:text-4xl font-black text-white mb-2 whitespace-nowrap">${title}</div>
