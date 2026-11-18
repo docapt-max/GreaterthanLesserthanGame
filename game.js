@@ -352,13 +352,13 @@ function setupLevel0Round() {
     const leftSlot = document.createElement('div');
     leftSlot.id = 'drop-slot-left';
     leftSlot.className = 'level0-drop-slot';
-    leftSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here 📥</span>`;
+    leftSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here</span>`;
     leftContainer.appendChild(leftSlot);
 
     const rightSlot = document.createElement('div');
     rightSlot.id = 'drop-slot-right';
     rightSlot.className = 'level0-drop-slot';
-    rightSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here 📥</span>`;
+    rightSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here</span>`;
     rightContainer.appendChild(rightSlot);
 
     // Enable click-to-place fallback on the containers
@@ -530,7 +530,7 @@ function updateBoxSlotUI(side) {
 
     const val = placedChips[side];
     if (val === null) {
-        slot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here 📥</span>`;
+        slot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here</span>`;
     } else {
         slot.innerHTML = '';
         const chipDiv = document.createElement('div');
