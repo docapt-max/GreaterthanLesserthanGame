@@ -21,13 +21,17 @@ let level0Targets = { left: '', right: '' };
 let placedChips = { left: null, right: null };
 let selectedChip = null;
 
-// Level 2 Variables
+// Level 1 Variables (Quantities)
 let leftCount = 0;
 let rightCount = 0;
+let countedLeft = 0;
+let countedRight = 0;
 
 // DOM Elements
 const leftContainer = document.getElementById('left-container');
 const rightContainer = document.getElementById('right-container');
+const smallBoxLeft = document.getElementById('small-box-left');
+const smallBoxRight = document.getElementById('small-box-right');
 const scoreboard = document.getElementById('scoreboard');
 const centerCol = document.getElementById('center-col');
 const btnLess = document.getElementById('btn-less');
@@ -71,6 +75,20 @@ function createRectangleSvg(colorHex, size) {
     </svg>`;
 }
 
+function createStraightLineSvg(colorHex, size) {
+    // Straight line / bar with long axis running from right upper corner to left lower corner
+    // Constant thickness (12px) regardless of length along the long axis
+    const fixedViewDim = 240;
+    const thickness = 12;
+    // Guaranteed minimum length of 54px (aspect ratio 4.5:1) so the small bar is always clearly a bar and never a dot
+    const barLength = Math.max(54, size * 0.92);
+    const halfLength = barLength / 2;
+
+    return `<svg viewBox="-120 -120 240 240" style="width:${fixedViewDim}px; height:${fixedViewDim}px;" class="shape-svg">
+        <rect x="${-thickness / 2}" y="${-halfLength}" width="${thickness}" height="${barLength}" rx="${thickness / 2}" transform="rotate(45)" fill="${colorHex}" stroke="rgba(255,255,255,0.4)" stroke-width="3" />
+    </svg>`;
+}
+
 function createTriangleSvg(colorHex, size) {
     // Equilateral triangle (side ~84, height ~72.7 centered in 100x100)
     return `<svg viewBox="0 0 100 100" style="width:${size}px; height:${size}px;" class="shape-svg">
@@ -89,6 +107,7 @@ const SHAPES = [
     { type: 'circle', name: 'circle', render: createCircleSvg },
     { type: 'square', name: 'square', render: createSquareSvg },
     { type: 'rectangle', name: 'rectangle', render: createRectangleSvg },
+    { type: 'straight-line', name: 'bar', render: createStraightLineSvg },
     { type: 'triangle', name: 'triangle', render: createTriangleSvg },
     { type: 'pentagon', name: 'pentagon', render: createPentagonSvg }
 ];
@@ -131,7 +150,7 @@ function generateBalancedPool(options) {
     return shuffled;
 }
 
-// Level 2 Diverse Emoji Items (Fruits, Animals, Vehicles, Nature & Toys)
+// Level 1 Diverse Emoji Items (Fruits, Animals, Vehicles, Nature & Toys)
 const LEVEL_2_ITEMS = [
     { emoji: '🍎', name: 'Apples' },
     { emoji: '🍌', name: 'Bananas' },
@@ -185,7 +204,7 @@ function switchLevel(lvl) {
 // Calculate shape sizes ensuring smaller shape meets the required size difference
 // In Level 0: 2D surface area difference is guaranteed to be a minimum of 85%
 // Math: Area_ratio = (small / big)^2 <= (1 - 0.85) = 0.15 => small / big <= sqrt(0.15) ≈ 0.3873
-function getShapeSizes(lvl = currentLevel) {
+function getShapeSizes(lvl = currentLevel, shapeType = null) {
     const boxRect = leftContainer.getBoundingClientRect();
     const minDim = Math.min(boxRect.width || 380, boxRect.height || 380);
 
@@ -194,14 +213,21 @@ function getShapeSizes(lvl = currentLevel) {
     if (bigSize < 180) bigSize = 180;
     if (bigSize > 220) bigSize = 220;
 
-    // Linear ratio: 0.38 for Level 0 ensures 2D surface area difference is >= 85.5% (minimum 85%)
-    const linearRatio = (lvl === 0) ? 0.38 : 0.48;
+    // Linear ratio:
+    // For 2D shapes (circle, square, etc.), area scales as ratio^2: 0.38^2 = 0.1444 => >= 85.5% difference
+    // For the bar, length ratio 0.28 gives 56px vs 190px (distinct bar, 4.5:1 aspect ratio, never a dot)
+    let linearRatio;
+    if (lvl === 0) {
+        linearRatio = (shapeType === 'straight-line') ? 0.28 : 0.38;
+    } else {
+        linearRatio = (shapeType === 'straight-line') ? 0.46 : 0.48;
+    }
     const smallSize = Math.floor(bigSize * linearRatio);
 
     return { bigSize, smallSize };
 }
 
-// Swap the position of the greater than and lesser than picture buttons (Level 2)
+// Swap the position of the greater than and lesser than picture buttons (Level 1)
 function updateButtonPositions() {
     let lessOnTop = Math.random() < 0.5;
 
@@ -264,23 +290,31 @@ function startGame() {
         orText.style.display = 'none';
         questionSentence.style.display = 'none';
         chipsContainer.style.display = 'flex';
+        if (smallBoxLeft) smallBoxLeft.style.display = 'none';
+        if (smallBoxRight) smallBoxRight.style.display = 'none';
         roundPool = generateBalancedPool(['left-small', 'left-big']);
     } else if (currentLevel === 1) {
+        // Level 1: Quantities / Emojis (< and >) with Small Boxes showing counts
+        centerCol.style.display = 'flex';
+        btnLess.style.display = 'flex';
+        btnGreater.style.display = 'flex';
+        orText.style.display = 'block';
+        questionSentence.style.display = 'none'; // Uncluttered sketch layout
+        chipsContainer.style.display = 'none';
+        if (smallBoxLeft) smallBoxLeft.style.display = 'flex';
+        if (smallBoxRight) smallBoxRight.style.display = 'flex';
+        roundPool = generateBalancedPool(['<', '>']);
+    } else {
+        // Level 2: Geometric Shapes (bigger / smaller)
         centerCol.style.display = 'none';
         btnLess.style.display = 'none';
         btnGreater.style.display = 'none';
         orText.style.display = 'none';
         questionSentence.style.display = 'block';
         chipsContainer.style.display = 'flex';
+        if (smallBoxLeft) smallBoxLeft.style.display = 'none';
+        if (smallBoxRight) smallBoxRight.style.display = 'none';
         roundPool = generateBalancedPool(['bigger', 'smaller']);
-    } else {
-        centerCol.style.display = 'flex';
-        btnLess.style.display = 'flex';
-        btnGreater.style.display = 'flex';
-        orText.style.display = 'block';
-        questionSentence.style.display = 'block';
-        chipsContainer.style.display = 'none';
-        roundPool = generateBalancedPool(['<', '>']);
     }
 
     updateLevelButtonsUI();
@@ -295,8 +329,17 @@ function nextRound() {
     rightContainer.innerHTML = '';
     leftContainer.onclick = null;
     rightContainer.onclick = null;
-    leftContainer.className = 'relative h-full max-h-[480px] min-h-[320px] game-board flex-1 bg-slate-800 rounded-3xl overflow-hidden border-4 border-slate-600 flex items-center justify-center';
-    rightContainer.className = 'relative h-full max-h-[480px] min-h-[320px] game-board flex-1 bg-slate-800 rounded-3xl overflow-hidden border-4 border-slate-600 flex items-center justify-center';
+    leftContainer.className = 'relative flex-1 w-full game-board bg-slate-800 rounded-3xl overflow-hidden border-4 border-slate-600 flex items-center justify-center';
+    rightContainer.className = 'relative flex-1 w-full game-board bg-slate-800 rounded-3xl overflow-hidden border-4 border-slate-600 flex items-center justify-center';
+    countedLeft = 0;
+    countedRight = 0;
+
+    if (smallBoxLeft) {
+        smallBoxLeft.className = 'self-end mb-1 md:mb-1.5 px-4 py-1 md:px-5 md:py-1.5 min-w-[76px] md:min-w-[90px] h-12 md:h-14 bg-slate-800/95 rounded-2xl border-4 border-indigo-400/90 shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] flex items-center justify-center text-2xl md:text-3xl font-black text-indigo-100 select-none z-10 transition-all';
+    }
+    if (smallBoxRight) {
+        smallBoxRight.className = 'self-start mb-1 md:mb-1.5 px-4 py-1 md:px-5 md:py-1.5 min-w-[76px] md:min-w-[90px] h-12 md:h-14 bg-slate-800/95 rounded-2xl border-4 border-indigo-400/90 shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] flex items-center justify-center text-2xl md:text-3xl font-black text-indigo-100 select-none z-10 transition-all';
+    }
 
     if (currentLevel === 0) {
         setupLevel0Round();
@@ -318,7 +361,7 @@ function setupLevel0Round() {
     const rightColor = shuffledColors[1];
 
     // 3. Determine sizes (Level 0: minimum 85% 2D surface area difference)
-    const { bigSize, smallSize } = getShapeSizes(0);
+    const { bigSize, smallSize } = getShapeSizes(0, shape.type);
 
     // 4. Target from balanced pool
     const poolTarget = roundPool[currentAttempt] || (Math.random() < 0.5 ? 'left-small' : 'left-big');
@@ -337,33 +380,37 @@ function setupLevel0Round() {
     placedChips = { left: null, right: null };
     selectedChip = null;
 
-    // 5. Render Shapes in Boxes
+    // 5. Render Shapes in Boxes (with top padding to center nicely below top drop slot)
     const leftWrapper = document.createElement('div');
-    leftWrapper.className = 'shape-container';
+    leftWrapper.className = 'shape-container pt-8 md:pt-10';
     leftWrapper.innerHTML = shape.render(leftColor.hex, leftSize);
     leftContainer.appendChild(leftWrapper);
 
     const rightWrapper = document.createElement('div');
-    rightWrapper.className = 'shape-container';
+    rightWrapper.className = 'shape-container pt-8 md:pt-10';
     rightWrapper.innerHTML = shape.render(rightColor.hex, rightSize);
     rightContainer.appendChild(rightWrapper);
 
-    // 6. Create Drop Slots inside Boxes at bottom
+    // 6. Create Drop Slots inside Boxes at center top
     const leftSlot = document.createElement('div');
     leftSlot.id = 'drop-slot-left';
     leftSlot.className = 'level0-drop-slot';
     leftSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here</span>`;
+    leftSlot.onclick = (e) => {
+        e.stopPropagation();
+        handleSlotClick('left');
+    };
     leftContainer.appendChild(leftSlot);
 
     const rightSlot = document.createElement('div');
     rightSlot.id = 'drop-slot-right';
     rightSlot.className = 'level0-drop-slot';
     rightSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here</span>`;
+    rightSlot.onclick = (e) => {
+        e.stopPropagation();
+        handleSlotClick('right');
+    };
     rightContainer.appendChild(rightSlot);
-
-    // Enable click-to-place fallback on the containers
-    leftContainer.onclick = () => handleContainerClick('left');
-    rightContainer.onclick = () => handleContainerClick('right');
 
     // 7. Render "small" and "big" chips in chipsContainer with random order
     chipsContainer.innerHTML = '';
@@ -382,10 +429,13 @@ function setupLevel0Round() {
 }
 
 // Level 0 Drag & Drop and Tap Helpers
-function isPointInElement(x, y, elem) {
+function isPointInElement(x, y, elem, padding = 0) {
     if (!elem) return false;
     const rect = elem.getBoundingClientRect();
-    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    return x >= (rect.left - padding) &&
+           x <= (rect.right + padding) &&
+           y >= (rect.top - padding) &&
+           y <= (rect.bottom + padding);
 }
 
 function setContainerHover(side, isHovering) {
@@ -448,8 +498,10 @@ function initChipDrag(e, chipType, chipBtn, sourceSide = null) {
             ghostEl.style.left = `${curX}px`;
             ghostEl.style.top = `${curY}px`;
 
-            const isOverLeft = isPointInElement(curX, curY, leftContainer);
-            const isOverRight = isPointInElement(curX, curY, rightContainer);
+            const leftSlot = document.getElementById('drop-slot-left');
+            const rightSlot = document.getElementById('drop-slot-right');
+            const isOverLeft = isPointInElement(curX, curY, leftSlot, 12);
+            const isOverRight = isPointInElement(curX, curY, rightSlot, 12);
 
             setContainerHover('left', isOverLeft);
             setContainerHover('right', isOverRight);
@@ -473,10 +525,12 @@ function initChipDrag(e, chipType, chipBtn, sourceSide = null) {
 
             const endX = upEvent.clientX;
             const endY = upEvent.clientY;
+            const leftSlot = document.getElementById('drop-slot-left');
+            const rightSlot = document.getElementById('drop-slot-right');
 
-            if (isPointInElement(endX, endY, leftContainer)) {
+            if (isPointInElement(endX, endY, leftSlot, 12)) {
                 placeChipInBox('left', chipType);
-            } else if (isPointInElement(endX, endY, rightContainer)) {
+            } else if (isPointInElement(endX, endY, rightSlot, 12)) {
                 placeChipInBox('right', chipType);
             } else {
                 updateDockChipsUI();
@@ -531,8 +585,13 @@ function updateBoxSlotUI(side) {
     const val = placedChips[side];
     if (val === null) {
         slot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here</span>`;
+        slot.onclick = (e) => {
+            e.stopPropagation();
+            handleSlotClick(side);
+        };
     } else {
         slot.innerHTML = '';
+        slot.onclick = null;
         const chipDiv = document.createElement('div');
         chipDiv.className = 'placed-chip chip-btn draggable-chip px-6 py-1.5 md:px-8 md:py-2 rounded-full text-base md:text-lg font-black bg-indigo-600 text-white border-2 border-indigo-300 shadow-md flex items-center gap-2 select-none';
         chipDiv.title = 'Tap to remove or drag to other box';
@@ -584,7 +643,7 @@ function handleChipTap(chipType, chipBtn) {
     }
 }
 
-function handleContainerClick(side) {
+function handleSlotClick(side) {
     if (isAnsweringBlocked) return;
     if (selectedChip) {
         placeChipInBox(side, selectedChip);
@@ -632,9 +691,54 @@ function checkLevel0Answer() {
     }, 450);
 }
 
-// Setup Level 1: Geometric Shapes & Sizes
+// Setup Level 1: Quantities (Various Emojis arranged diagonally from right-upper to left-lower corner, populated from center)
 function setupLevel1Round() {
-    // 1. Pick geometric shape (circle, square, equilateral triangle, pentagon)
+    updateButtonPositions();
+
+    // Pick 2 different emojis from the pool of 29 items (fruits, animals, vehicles, toys, nature)
+    const shuffledItems = [...LEVEL_2_ITEMS].sort(() => Math.random() - 0.5);
+    const leftItem = shuffledItems[0];
+    const rightItem = shuffledItems[1];
+
+    questionSentence.innerHTML = `${leftItem.emoji} ${leftItem.name} are <span id="sentence-blank" class="px-2.5 py-0.5 rounded-lg bg-slate-700/70 border border-slate-500 font-extrabold text-indigo-200">________</span> ${rightItem.emoji} ${rightItem.name}.`;
+
+    // 1, 2, or 3 for smaller number; 7, 8, or 9 for bigger number
+    const smallOptions = [1, 2, 3];
+    const largeOptions = [7, 8, 9];
+    const smallCount = smallOptions[Math.floor(Math.random() * smallOptions.length)];
+    const largeCount = largeOptions[Math.floor(Math.random() * largeOptions.length)];
+
+    const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.5 ? '<' : '>');
+
+    if (targetOperator === '<') {
+        leftCount = smallCount;
+        rightCount = largeCount;
+    } else {
+        leftCount = largeCount;
+        rightCount = smallCount;
+    }
+
+    countedLeft = 0;
+    countedRight = 0;
+
+    // Both sides strictly diagonal from right upper to left lower corner, populated from center
+    drawDots(leftContainer, leftCount, leftItem.emoji, 'left');
+    drawDots(rightContainer, rightCount, rightItem.emoji, 'right');
+
+    // Update the Small Boxes starting from 0 so the child can count up by touching/clicking emojis
+    if (smallBoxLeft) {
+        smallBoxLeft.style.display = 'flex';
+        smallBoxLeft.textContent = '0';
+    }
+    if (smallBoxRight) {
+        smallBoxRight.style.display = 'flex';
+        smallBoxRight.textContent = '0';
+    }
+}
+
+// Setup Level 2: Geometric Shapes & Sizes (with "bigger" and "smaller" chips)
+function setupLevel2Round() {
+    // 1. Pick geometric shape (circle, square, rectangle, equilateral triangle, pentagon)
     const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
 
     // 2. Pick 2 different colors
@@ -642,8 +746,8 @@ function setupLevel1Round() {
     const leftColor = shuffledColors[0];
     const rightColor = shuffledColors[1];
 
-    // 3. Determine sizes with at least 50% difference (smaller shape is 48% or less of big shape)
-    const { bigSize, smallSize } = getShapeSizes(1);
+    // 3. Determine sizes with at least 50% difference
+    const { bigSize, smallSize } = getShapeSizes(2, shape.type);
 
     // 4. Target from balanced pool: 'bigger' or 'smaller'
     const target = roundPool[currentAttempt] || (Math.random() < 0.5 ? 'bigger' : 'smaller');
@@ -679,90 +783,231 @@ function setupLevel1Round() {
         const btn = document.createElement('button');
         btn.className = 'chip-btn min-h-[52px] px-8 py-2.5 md:px-11 md:py-3.5 rounded-full text-xl md:text-2xl font-black bg-slate-800/95 text-indigo-100 hover:text-white border-2 border-indigo-400/90 shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.5)] active:scale-95 transition-all cursor-pointer select-none backdrop-blur-sm flex items-center justify-center';
         btn.textContent = choice;
-        btn.onclick = () => handleLevel1Guess(choice, target, btn);
+        btn.onclick = () => handleLevel2Guess(choice, target, btn);
         chipsContainer.appendChild(btn);
     });
 }
 
-// Setup Level 2: Quantities (Diverse Engaging Emojis)
-function setupLevel2Round() {
-    updateButtonPositions();
-
-    // Pick 2 different emojis from the pool of 29 items
-    const shuffledItems = [...LEVEL_2_ITEMS].sort(() => Math.random() - 0.5);
-    const leftItem = shuffledItems[0];
-    const rightItem = shuffledItems[1];
-
-    questionSentence.innerHTML = `${leftItem.emoji} ${leftItem.name} are <span id="sentence-blank" class="px-2.5 py-0.5 rounded-lg bg-slate-700/70 border border-slate-500 font-extrabold text-indigo-200">________</span> ${rightItem.emoji} ${rightItem.name}.`;
-
-    // Stark quantity contrast: larger box has 23, 24, or 25; smaller box has 2, 3, or 4
-    const largeOptions = [23, 24, 25];
-    const smallOptions = [2, 3, 4];
-    const largeCount = largeOptions[Math.floor(Math.random() * largeOptions.length)];
-    const smallCount = smallOptions[Math.floor(Math.random() * smallOptions.length)];
-
-    const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.5 ? '<' : '>');
-
-    if (targetOperator === '<') {
-        leftCount = smallCount;
-        rightCount = largeCount;
-    } else {
-        leftCount = largeCount;
-        rightCount = smallCount;
-    }
-
-    drawDots(leftContainer, leftCount, leftItem.emoji);
-    drawDots(rightContainer, rightCount, rightItem.emoji);
-}
-
-// Draw emojis using a strict grid-based coordinate system (Level 2: 5 rows x 6 cols = 30 cells)
-function drawDots(container, count, emojiChar) {
-    const rows = 5;
-    const cols = 6;
-    const cells = [];
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            cells.push({ r, c });
-        }
-    }
-
-    // Shuffle cells to place emojis in random unique positions
-    for (let i = cells.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [cells[i], cells[j]] = [cells[j], cells[i]];
-    }
-
-    // Safe inner boundary (percentages) to guarantee items never touch borders
-    const minX = 11;
-    const maxX = 89;
-    const minY = 11;
-    const maxY = 89;
-    const stepX = (maxX - minX) / (cols - 1); // 15.6%
-    const stepY = (maxY - minY) / (rows - 1); // 19.5%
+// Draw emojis arranged diagonally from right-upper to left-lower corner, populated outward from the center
+function drawDots(container, count, emojiChar, side) {
+    const step = 7.8; // Uniform step percentage along X and Y axes
 
     for (let i = 0; i < count; i++) {
         const dot = document.createElement('div');
         dot.classList.add('dot');
         dot.textContent = emojiChar;
 
-        const cell = cells[i];
-
-        // Controlled subtle jitter (max ±1.5%) inside the grid cell
-        const jitterX = (Math.random() - 0.5) * 3;
-        const jitterY = (Math.random() - 0.5) * 3;
-
-        const leftPos = minX + (cell.c * stepX) + jitterX;
-        const topPos = minY + (cell.r * stepY) + jitterY;
+        // Offset from center in units of steps (negative = top-right, positive = bottom-left)
+        const offset = i - (count - 1) / 2;
+        const leftPos = 50 - (offset * step);
+        const topPos = 50 + (offset * step);
 
         dot.style.top = `${topPos}%`;
         dot.style.left = `${leftPos}%`;
+
+        // Interactive touch/click counting
+        dot.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            handleDotCount(dot, side);
+        });
 
         container.appendChild(dot);
     }
 }
 
-// Handle Level 1 Chip Tap
-function handleLevel1Guess(choice, targetChoice, chipBtn) {
+// Trigger a bump animation on the small count box
+function triggerBoxBump(box) {
+    if (!box) return;
+    box.classList.remove('count-bump');
+    void box.offsetWidth; // Force DOM reflow to re-trigger CSS keyframe
+    box.classList.add('count-bump');
+}
+
+// Play pleasant ascending pop sound when counting
+function playCountSound(count) {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!window._countAudioCtx) {
+            window._countAudioCtx = new AudioCtx();
+        }
+        const ctx = window._countAudioCtx;
+        if (ctx.state === 'suspended') {
+            ctx.resume();
+        }
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+
+        // Frequency scales up with count: musical staircase
+        const baseFreq = Math.min(440 + (count * 20), 960);
+        osc.frequency.setValueAtTime(baseFreq, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.35, ctx.currentTime + 0.07);
+
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.07);
+    } catch (e) {}
+}
+
+// Play pleasant descending drop sound when uncounting
+function playUncountSound() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!window._countAudioCtx) {
+            window._countAudioCtx = new AudioCtx();
+        }
+        const ctx = window._countAudioCtx;
+        if (ctx.state === 'suspended') {
+            ctx.resume();
+        }
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + 0.07);
+
+        gain.gain.setValueAtTime(0.14, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.07);
+    } catch (e) {}
+}
+
+// Handle tapping/clicking an emoji to increment or decrement the count
+function handleDotCount(dot, side) {
+    if (isAnsweringBlocked) return;
+
+    const isCounted = dot.classList.contains('dot-counted');
+
+    if (!isCounted) {
+        dot.classList.add('dot-counted');
+        if (side === 'left') {
+            countedLeft++;
+            if (smallBoxLeft) {
+                smallBoxLeft.textContent = countedLeft;
+                triggerBoxBump(smallBoxLeft);
+            }
+            playCountSound(countedLeft);
+        } else {
+            countedRight++;
+            if (smallBoxRight) {
+                smallBoxRight.textContent = countedRight;
+                triggerBoxBump(smallBoxRight);
+            }
+            playCountSound(countedRight);
+        }
+    } else {
+        // Untap to uncount if tapped again
+        dot.classList.remove('dot-counted');
+        if (side === 'left') {
+            countedLeft = Math.max(0, countedLeft - 1);
+            if (smallBoxLeft) {
+                smallBoxLeft.textContent = countedLeft;
+                triggerBoxBump(smallBoxLeft);
+            }
+        } else {
+            countedRight = Math.max(0, countedRight - 1);
+            if (smallBoxRight) {
+                smallBoxRight.textContent = countedRight;
+                triggerBoxBump(smallBoxRight);
+            }
+        }
+        playUncountSound();
+    }
+}
+
+// Handle Level 1 Symbol Tap (< or >)
+function handleLevel1Guess(operator, targetChoice, chipBtn) {
+    if (operator === 'bigger' || operator === 'smaller') {
+        return handleLevel2Guess(operator, targetChoice, chipBtn);
+    }
+    if (isAnsweringBlocked) return;
+    isAnsweringBlocked = true;
+
+    // Reveal true totals and highlight all emojis upon answering
+    if (smallBoxLeft) smallBoxLeft.textContent = leftCount;
+    if (smallBoxRight) smallBoxRight.textContent = rightCount;
+    leftContainer.querySelectorAll('.dot').forEach(d => d.classList.add('dot-counted'));
+    rightContainer.querySelectorAll('.dot').forEach(d => d.classList.add('dot-counted'));
+
+    if (operator === lastButtonPressed) {
+        consecutiveButtonCount++;
+    } else {
+        lastButtonPressed = operator;
+        consecutiveButtonCount = 1;
+        consecutivePointsFromCurrentButton = 0;
+    }
+
+    let isCorrect = false;
+    if (operator === '<' && leftCount < rightCount) {
+        isCorrect = true;
+    } else if (operator === '>' && leftCount > rightCount) {
+        isCorrect = true;
+    }
+
+    if (isCorrect) {
+        if (consecutivePointsFromCurrentButton >= 5) {
+            isCorrect = false;
+        } else {
+            consecutivePointsFromCurrentButton++;
+        }
+    }
+
+    const sentenceBlank = document.getElementById('sentence-blank');
+    if (sentenceBlank) {
+        sentenceBlank.innerText = operator === '<' ? 'lesser than' : 'greater than';
+        sentenceBlank.className = isCorrect ? 'px-2.5 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-400 font-extrabold text-emerald-300' : 'px-2.5 py-0.5 rounded-lg bg-rose-500/20 border border-rose-400 font-extrabold text-rose-300';
+    }
+
+    showEmojiFeedback(isCorrect);
+
+    if (isCorrect) {
+        score++;
+        if (smallBoxLeft) {
+            smallBoxLeft.classList.remove('border-indigo-400/90');
+            smallBoxLeft.classList.add('border-emerald-400', 'bg-emerald-500/20', 'text-emerald-300', 'shadow-[0_0_20px_rgba(16,185,129,0.5)]');
+        }
+        if (smallBoxRight) {
+            smallBoxRight.classList.remove('border-indigo-400/90');
+            smallBoxRight.classList.add('border-emerald-400', 'bg-emerald-500/20', 'text-emerald-300', 'shadow-[0_0_20px_rgba(16,185,129,0.5)]');
+        }
+    } else {
+        wrongAnswers++;
+        if (smallBoxLeft) {
+            smallBoxLeft.classList.remove('border-indigo-400/90');
+            smallBoxLeft.classList.add('border-rose-400', 'bg-rose-500/20', 'text-rose-300', 'shadow-[0_0_20px_rgba(244,63,94,0.5)]');
+        }
+        if (smallBoxRight) {
+            smallBoxRight.classList.remove('border-indigo-400/90');
+            smallBoxRight.classList.add('border-rose-400', 'bg-rose-500/20', 'text-rose-300', 'shadow-[0_0_20px_rgba(244,63,94,0.5)]');
+        }
+    }
+    attemptHistory.push(isCorrect);
+
+    updateScoreboardUI();
+    updateLivesUI(!isCorrect);
+    currentAttempt++;
+
+    // Pause and wait for child to reflect instead of auto-advancing
+    setTimeout(() => {
+        showNextPrompt();
+    }, 450);
+}
+
+// Handle Level 2 Chip Tap ("bigger" or "smaller")
+function handleLevel2Guess(choice, targetChoice, chipBtn) {
+    if (choice === '<' || choice === '>') {
+        return handleLevel1Guess(choice);
+    }
     if (isAnsweringBlocked) return;
     isAnsweringBlocked = true;
 
@@ -805,59 +1050,6 @@ function handleLevel1Guess(choice, targetChoice, chipBtn) {
 
     attemptHistory.push(isCorrect);
     showEmojiFeedback(isCorrect);
-    updateScoreboardUI();
-    updateLivesUI(!isCorrect);
-    currentAttempt++;
-
-    // Pause and wait for child to reflect instead of auto-advancing
-    setTimeout(() => {
-        showNextPrompt();
-    }, 450);
-}
-
-// Handle Level 2 Symbol Tap
-function handleLevel2Guess(operator) {
-    if (isAnsweringBlocked) return;
-    isAnsweringBlocked = true;
-
-    if (operator === lastButtonPressed) {
-        consecutiveButtonCount++;
-    } else {
-        lastButtonPressed = operator;
-        consecutiveButtonCount = 1;
-        consecutivePointsFromCurrentButton = 0;
-    }
-
-    let isCorrect = false;
-    if (operator === '<' && leftCount < rightCount) {
-        isCorrect = true;
-    } else if (operator === '>' && leftCount > rightCount) {
-        isCorrect = true;
-    }
-
-    if (isCorrect) {
-        if (consecutivePointsFromCurrentButton >= 5) {
-            isCorrect = false;
-        } else {
-            consecutivePointsFromCurrentButton++;
-        }
-    }
-
-    const sentenceBlank = document.getElementById('sentence-blank');
-    if (sentenceBlank) {
-        sentenceBlank.innerText = operator === '<' ? 'lesser than' : 'greater than';
-        sentenceBlank.className = isCorrect ? 'px-2.5 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-400 font-extrabold text-emerald-300' : 'px-2.5 py-0.5 rounded-lg bg-rose-500/20 border border-rose-400 font-extrabold text-rose-300';
-    }
-
-    showEmojiFeedback(isCorrect);
-
-    if (isCorrect) {
-        score++;
-    } else {
-        wrongAnswers++;
-    }
-    attemptHistory.push(isCorrect);
-
     updateScoreboardUI();
     updateLivesUI(!isCorrect);
     currentAttempt++;
@@ -979,6 +1171,8 @@ function endGame(isThreeStrikes = false) {
     if (btnLess) btnLess.style.display = 'none';
     if (btnGreater) btnGreater.style.display = 'none';
     if (orText) orText.style.display = 'none';
+    if (smallBoxLeft) smallBoxLeft.style.display = 'none';
+    if (smallBoxRight) smallBoxRight.style.display = 'none';
 
     const existingGameOver = document.getElementById('game-over-modal');
     if (existingGameOver) existingGameOver.remove();
