@@ -93,6 +93,11 @@
         <!-- Middle Column: Handwriting Recognition Canvas (Level 1 only: in between the two small numbers) -->
         <div id="center-col"
             class="hidden flex-col items-center justify-end z-20 shrink-0 self-end mb-0.5">
+            <!-- Manual Clear Button (Above the Box) -->
+            <button id="btn-clear-canvas" type="button" aria-label="Clear drawing"
+                class="mb-1.5 px-3.5 py-1 bg-slate-800/90 hover:bg-slate-700 active:bg-slate-900 active:scale-95 text-indigo-200 hover:text-white text-xs md:text-sm font-extrabold rounded-full border border-indigo-400/50 shadow-sm transition-all flex items-center gap-1 cursor-pointer select-none">
+                <span>⌫</span> Clear
+            </button>
             <!-- Canvas Writing Card -->
             <div id="canvas-card"
                 class="relative w-44 h-32 md:w-48 md:h-36 bg-slate-800/95 rounded-2xl border-4 border-indigo-400/90 shadow-[0_4px_20px_rgba(0,0,0,0.5),0_0_15px_rgba(99,102,241,0.3)] overflow-hidden flex items-center justify-center transition-all">
@@ -103,11 +108,6 @@
                     <span class="text-lg md:text-xl font-black tracking-widest">&lt;&nbsp;&nbsp;=&nbsp;&nbsp;&gt;</span>
                 </div>
             </div>
-            <!-- Manual Clear Button -->
-            <button id="btn-clear-canvas" type="button" aria-label="Clear drawing"
-                class="mt-1.5 px-3.5 py-1 bg-slate-800/90 hover:bg-slate-700 active:bg-slate-900 active:scale-95 text-indigo-200 hover:text-white text-xs md:text-sm font-extrabold rounded-full border border-indigo-400/50 shadow-sm transition-all flex items-center gap-1 cursor-pointer select-none">
-                <span>⌫</span> Clear
-            </button>
         </div>
 
         <!-- Right Side: Big Box 2 + Small Box 2 Below -->
