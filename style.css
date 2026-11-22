@@ -167,7 +167,7 @@ button, .chip-btn, #btn-less, #btn-greater, #lvl-btn-0, #lvl-btn-1, #lvl-btn-2 {
 /* Next Button Overlay (Overlays in lower center so no other elements move) */
 #next-btn {
     position: fixed;
-    bottom: 72px;
+    bottom: 24px;
     left: 50%;
     transform: translate(-50%, 0);
     z-index: 50;
@@ -189,7 +189,7 @@ button, .chip-btn, #btn-less, #btn-greater, #lvl-btn-0, #lvl-btn-1, #lvl-btn-2 {
 
 @media (min-width: 768px) and (orientation: landscape) {
     #next-btn {
-        bottom: 78px;
+        bottom: 28px;
     }
 }
 

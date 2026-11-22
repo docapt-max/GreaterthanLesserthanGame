@@ -335,10 +335,10 @@ function nextRound() {
     countedRight = 0;
 
     if (smallBoxLeft) {
-        smallBoxLeft.className = 'self-end mb-1 md:mb-1.5 px-4 py-1 md:px-5 md:py-1.5 min-w-[76px] md:min-w-[90px] h-12 md:h-14 bg-slate-800/95 rounded-2xl border-4 border-indigo-400/90 shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] flex items-center justify-center text-2xl md:text-3xl font-black text-indigo-100 select-none z-10 transition-all';
+        smallBoxLeft.className = 'self-end mt-1.5 md:mt-2 px-4 py-1 md:px-5 md:py-1.5 min-w-[76px] md:min-w-[88px] h-11 md:h-12 bg-slate-800/95 rounded-2xl border-4 border-indigo-400/90 shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] flex items-center justify-center text-2xl md:text-3xl font-black text-indigo-100 select-none z-10 transition-all';
     }
     if (smallBoxRight) {
-        smallBoxRight.className = 'self-start mb-1 md:mb-1.5 px-4 py-1 md:px-5 md:py-1.5 min-w-[76px] md:min-w-[90px] h-12 md:h-14 bg-slate-800/95 rounded-2xl border-4 border-indigo-400/90 shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] flex items-center justify-center text-2xl md:text-3xl font-black text-indigo-100 select-none z-10 transition-all';
+        smallBoxRight.className = 'self-start mt-1.5 md:mt-2 px-4 py-1 md:px-5 md:py-1.5 min-w-[76px] md:min-w-[88px] h-11 md:h-12 bg-slate-800/95 rounded-2xl border-4 border-indigo-400/90 shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] flex items-center justify-center text-2xl md:text-3xl font-black text-indigo-100 select-none z-10 transition-all';
     }
 
     if (currentLevel === 0) {
@@ -725,14 +725,14 @@ function setupLevel1Round() {
     drawDots(leftContainer, leftCount, leftItem.emoji, 'left');
     drawDots(rightContainer, rightCount, rightItem.emoji, 'right');
 
-    // Update the Small Boxes starting from 0 so the child can count up by touching/clicking emojis
+    // Update the Small Boxes with numbers from start of round (no need to wait for counting)
     if (smallBoxLeft) {
         smallBoxLeft.style.display = 'flex';
-        smallBoxLeft.textContent = '0';
+        smallBoxLeft.textContent = leftCount;
     }
     if (smallBoxRight) {
         smallBoxRight.style.display = 'flex';
-        smallBoxRight.textContent = '0';
+        smallBoxRight.textContent = rightCount;
     }
 }
 
@@ -882,7 +882,7 @@ function playUncountSound() {
     } catch (e) {}
 }
 
-// Handle tapping/clicking an emoji to increment or decrement the count
+// Handle tapping/clicking an emoji to provide tactile audio and bump feedback
 function handleDotCount(dot, side) {
     if (isAnsweringBlocked) return;
 
@@ -893,14 +893,12 @@ function handleDotCount(dot, side) {
         if (side === 'left') {
             countedLeft++;
             if (smallBoxLeft) {
-                smallBoxLeft.textContent = countedLeft;
                 triggerBoxBump(smallBoxLeft);
             }
             playCountSound(countedLeft);
         } else {
             countedRight++;
             if (smallBoxRight) {
-                smallBoxRight.textContent = countedRight;
                 triggerBoxBump(smallBoxRight);
             }
             playCountSound(countedRight);
@@ -911,13 +909,11 @@ function handleDotCount(dot, side) {
         if (side === 'left') {
             countedLeft = Math.max(0, countedLeft - 1);
             if (smallBoxLeft) {
-                smallBoxLeft.textContent = countedLeft;
                 triggerBoxBump(smallBoxLeft);
             }
         } else {
             countedRight = Math.max(0, countedRight - 1);
             if (smallBoxRight) {
-                smallBoxRight.textContent = countedRight;
                 triggerBoxBump(smallBoxRight);
             }
         }
