@@ -34,9 +34,6 @@ const smallBoxLeft = document.getElementById('small-box-left');
 const smallBoxRight = document.getElementById('small-box-right');
 const scoreboard = document.getElementById('scoreboard');
 const centerCol = document.getElementById('center-col');
-const btnLess = document.getElementById('btn-less');
-const btnGreater = document.getElementById('btn-greater');
-const orText = document.getElementById('or-text');
 const chipsContainer = document.getElementById('chips-container');
 const questionSentence = document.getElementById('question-sentence');
 const playArea = document.getElementById('play-area');
@@ -112,12 +109,24 @@ const SHAPES = [
     { type: 'pentagon', name: 'pentagon', render: createPentagonSvg }
 ];
 
-// Pre-generate balanced 5 vs 5 pool to prevent single-choice exploit
+// Pre-generate balanced 10-item pool (supports 2 or 3 choices) to prevent single-choice exploit
 function generateBalancedPool(options) {
-    const pool = [
-        options[0], options[0], options[0], options[0], options[0],
-        options[1], options[1], options[1], options[1], options[1]
-    ];
+    let pool = [];
+    if (options.length === 2) {
+        pool = [
+            options[0], options[0], options[0], options[0], options[0],
+            options[1], options[1], options[1], options[1], options[1]
+        ];
+    } else if (options.length === 3) {
+        // e.g. 4 of '<', 4 of '>', 2 of '='
+        pool = [
+            options[0], options[0], options[0], options[0],
+            options[1], options[1], options[1], options[1],
+            options[2], options[2]
+        ];
+    } else {
+        pool = [...options];
+    }
     let shuffled = [...pool];
     let isValid = false;
     let attempts = 0;
@@ -227,30 +236,6 @@ function getShapeSizes(lvl = currentLevel, shapeType = null) {
     return { bigSize, smallSize };
 }
 
-// Swap the position of the greater than and lesser than picture buttons (Level 1)
-function updateButtonPositions() {
-    let lessOnTop = Math.random() < 0.5;
-
-    if (lastLessOnTop !== null && lessOnTop === lastLessOnTop) {
-        samePositionStreak++;
-        if (samePositionStreak >= 2) {
-            lessOnTop = !lessOnTop;
-            samePositionStreak = 1;
-        }
-    } else {
-        samePositionStreak = 1;
-    }
-    lastLessOnTop = lessOnTop;
-
-    if (lessOnTop) {
-        centerCol.insertBefore(btnLess, orText);
-        centerCol.appendChild(btnGreater);
-    } else {
-        centerCol.insertBefore(btnGreater, orText);
-        centerCol.appendChild(btnLess);
-    }
-}
-
 // Initialize / Start Game
 function startGame() {
     currentAttempt = 0;
@@ -284,36 +269,34 @@ function startGame() {
 
     // Configure UI based on Level
     if (currentLevel === 0) {
-        centerCol.style.display = 'none';
-        btnLess.style.display = 'none';
-        btnGreater.style.display = 'none';
-        orText.style.display = 'none';
+        if (centerCol) centerCol.style.display = 'none';
         questionSentence.style.display = 'none';
         chipsContainer.style.display = 'flex';
         if (smallBoxLeft) smallBoxLeft.style.display = 'none';
         if (smallBoxRight) smallBoxRight.style.display = 'none';
+        if (window.HandwritingCanvas) window.HandwritingCanvas.disable();
         roundPool = generateBalancedPool(['left-small', 'left-big']);
     } else if (currentLevel === 1) {
-        // Level 1: Quantities / Emojis (< and >) with Small Boxes showing counts
-        centerCol.style.display = 'flex';
-        btnLess.style.display = 'flex';
-        btnGreater.style.display = 'flex';
-        orText.style.display = 'block';
+        // Level 1: Quantities / Emojis (<, =, >) with Handwriting Recognition Canvas
+        if (centerCol) centerCol.style.display = 'flex';
         questionSentence.style.display = 'none'; // Uncluttered sketch layout
         chipsContainer.style.display = 'none';
         if (smallBoxLeft) smallBoxLeft.style.display = 'flex';
         if (smallBoxRight) smallBoxRight.style.display = 'flex';
-        roundPool = generateBalancedPool(['<', '>']);
+        if (window.HandwritingCanvas) {
+            window.HandwritingCanvas.enable();
+            window.HandwritingCanvas.clear();
+            window.HandwritingCanvas.resize();
+        }
+        roundPool = generateBalancedPool(['<', '>', '=']);
     } else {
         // Level 2: Geometric Shapes (bigger / smaller)
-        centerCol.style.display = 'none';
-        btnLess.style.display = 'none';
-        btnGreater.style.display = 'none';
-        orText.style.display = 'none';
+        if (centerCol) centerCol.style.display = 'none';
         questionSentence.style.display = 'block';
         chipsContainer.style.display = 'flex';
         if (smallBoxLeft) smallBoxLeft.style.display = 'none';
         if (smallBoxRight) smallBoxRight.style.display = 'none';
+        if (window.HandwritingCanvas) window.HandwritingCanvas.disable();
         roundPool = generateBalancedPool(['bigger', 'smaller']);
     }
 
@@ -693,8 +676,6 @@ function checkLevel0Answer() {
 
 // Setup Level 1: Quantities (Various Emojis arranged diagonally from right-upper to left-lower corner, populated from center)
 function setupLevel1Round() {
-    updateButtonPositions();
-
     // Pick 2 different emojis from the pool of 29 items (fruits, animals, vehicles, toys, nature)
     const shuffledItems = [...LEVEL_2_ITEMS].sort(() => Math.random() - 0.5);
     const leftItem = shuffledItems[0];
@@ -708,9 +689,14 @@ function setupLevel1Round() {
     const smallCount = smallOptions[Math.floor(Math.random() * smallOptions.length)];
     const largeCount = largeOptions[Math.floor(Math.random() * largeOptions.length)];
 
-    const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.5 ? '<' : '>');
+    const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.4 ? '<' : (Math.random() < 0.75 ? '>' : '='));
 
-    if (targetOperator === '<') {
+    if (targetOperator === '=') {
+        const equalOptions = [2, 3, 7, 8];
+        const count = equalOptions[Math.floor(Math.random() * equalOptions.length)];
+        leftCount = count;
+        rightCount = count;
+    } else if (targetOperator === '<') {
         leftCount = smallCount;
         rightCount = largeCount;
     } else {
@@ -733,6 +719,13 @@ function setupLevel1Round() {
     if (smallBoxRight) {
         smallBoxRight.style.display = 'flex';
         smallBoxRight.textContent = rightCount;
+    }
+
+    // Clear and enable handwriting recognition canvas for player to draw >, <, or =
+    if (window.HandwritingCanvas) {
+        window.HandwritingCanvas.clear();
+        window.HandwritingCanvas.enable();
+        window.HandwritingCanvas.resize();
     }
 }
 
@@ -921,13 +914,18 @@ function handleDotCount(dot, side) {
     }
 }
 
-// Handle Level 1 Symbol Tap (< or >)
+// Handle Level 1 Symbol Input (<, >, or =)
 function handleLevel1Guess(operator, targetChoice, chipBtn) {
     if (operator === 'bigger' || operator === 'smaller') {
         return handleLevel2Guess(operator, targetChoice, chipBtn);
     }
     if (isAnsweringBlocked) return;
     isAnsweringBlocked = true;
+
+    // Disable handwriting canvas while showing feedback
+    if (window.HandwritingCanvas) {
+        window.HandwritingCanvas.disable();
+    }
 
     // Reveal true totals and highlight all emojis upon answering
     if (smallBoxLeft) smallBoxLeft.textContent = leftCount;
@@ -948,6 +946,8 @@ function handleLevel1Guess(operator, targetChoice, chipBtn) {
         isCorrect = true;
     } else if (operator === '>' && leftCount > rightCount) {
         isCorrect = true;
+    } else if (operator === '=' && leftCount === rightCount) {
+        isCorrect = true;
     }
 
     if (isCorrect) {
@@ -960,7 +960,8 @@ function handleLevel1Guess(operator, targetChoice, chipBtn) {
 
     const sentenceBlank = document.getElementById('sentence-blank');
     if (sentenceBlank) {
-        sentenceBlank.innerText = operator === '<' ? 'lesser than' : 'greater than';
+        const opText = operator === '<' ? 'lesser than' : (operator === '>' ? 'greater than' : 'equal to');
+        sentenceBlank.innerText = opText;
         sentenceBlank.className = isCorrect ? 'px-2.5 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-400 font-extrabold text-emerald-300' : 'px-2.5 py-0.5 rounded-lg bg-rose-500/20 border border-rose-400 font-extrabold text-rose-300';
     }
 
@@ -1164,9 +1165,8 @@ function endGame(isThreeStrikes = false) {
     if (scoreboard) scoreboard.classList.remove('scoreboard-active-tap');
 
     if (chipsContainer) chipsContainer.style.display = 'none';
-    if (btnLess) btnLess.style.display = 'none';
-    if (btnGreater) btnGreater.style.display = 'none';
-    if (orText) orText.style.display = 'none';
+    if (centerCol) centerCol.style.display = 'none';
+    if (window.HandwritingCanvas) window.HandwritingCanvas.disable();
     if (smallBoxLeft) smallBoxLeft.style.display = 'none';
     if (smallBoxRight) smallBoxRight.style.display = 'none';
 
@@ -1209,7 +1209,26 @@ function endGame(isThreeStrikes = false) {
     playArea.appendChild(gameOverModal);
 }
 
+// Global callback for handwriting symbol recognition
+function onSymbolRecognized(symbol) {
+    if (currentLevel === 1) {
+        handleLevel1Guess(symbol);
+    }
+}
+window.onSymbolRecognized = onSymbolRecognized;
+
 // Start Game on window load
 window.onload = () => {
+    if (window.HandwritingCanvas) {
+        window.HandwritingCanvas.init({
+            canvasId: 'handwriting-canvas',
+            cardId: 'canvas-card',
+            hintId: 'canvas-hint',
+            clearBtnId: 'btn-clear-canvas',
+            onSymbolRecognized: function (symbol) {
+                onSymbolRecognized(symbol);
+            }
+        });
+    }
     startGame();
 };

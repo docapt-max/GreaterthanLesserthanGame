@@ -23,7 +23,7 @@ body {
 }
 
 /* Optimized Touch Targets & Touch Feel for iPad 10.2" Landscape */
-button, .chip-btn, #btn-less, #btn-greater, #lvl-btn-0, #lvl-btn-1, #lvl-btn-2 {
+button, .chip-btn, #btn-clear-canvas, #lvl-btn-0, #lvl-btn-1, #lvl-btn-2 {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -392,7 +392,34 @@ button, .chip-btn, #btn-less, #btn-greater, #lvl-btn-0, #lvl-btn-1, #lvl-btn-2 {
     animation: shapePopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-/* Prevent Level 1 action buttons or question sentence flash on initial load / refresh */
+/* Handwriting Canvas & Writing Area (Level 1) */
+#canvas-card, #handwriting-canvas {
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Canvas Rejection Shake Animation */
+@keyframes canvasShake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-7px); }
+    40%, 80% { transform: translateX(7px); }
+}
+
+.canvas-shake {
+    animation: canvasShake 0.35s ease-in-out !important;
+    border-color: #f43f5e !important;
+    box-shadow: 0 0 24px rgba(244, 63, 94, 0.75) !important;
+}
+
+/* Canvas Recognition Success Glow */
+.canvas-success {
+    border-color: #34d399 !important;
+    box-shadow: 0 0 25px rgba(52, 211, 153, 0.8) !important;
+}
+
+/* Prevent Level 1 center column or question sentence flash on initial load / refresh */
 #center-col {
     display: none;
 }
