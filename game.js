@@ -310,27 +310,27 @@ function updateSettingsUI() {
 function getSettingsHintText(digits, difficulty) {
     if (digits === 1) {
         if (difficulty === 'easy') {
-            return '🍎 <b>1 Digit (Easy)</b>: Large contrast with picture emojis (e.g. 2 vs 8). Child easily compares quantities visually.';
+            return '🟦 <b>1 Digit (Easy)</b>: Large contrast with Ones unit blocks (e.g. 2 vs 8). Child compares unit cubes.';
         } else if (difficulty === 'medium') {
-            return '🍎 <b>1 Digit (Medium)</b>: Moderate count difference (differs by 2–3 items). Encourages counting emojis.';
+            return '🟦 <b>1 Digit (Medium)</b>: Moderate count difference (differs by 2–3 unit cubes).';
         } else {
-            return '🍎 <b>1 Digit (Hard)</b>: Close count difference (differs by 1 item, e.g. 4 vs 5). Requires careful counting.';
+            return '🟦 <b>1 Digit (Hard)</b>: Close count difference (differs by 1 unit cube, e.g. 4 vs 5).';
         }
     } else if (digits === 2) {
         if (difficulty === 'easy') {
-            return '🔢 <b>2 Digits (Easy)</b>: The tens place will be different on LHS and RHS (e.g. 28 vs 71). Child compares the tens digit.';
+            return '🔟 <b>2 Digits (Easy)</b>: Different number of Tens rods (e.g. 28 vs 71). Child compares the tens place!';
         } else if (difficulty === 'medium') {
-            return '🔢 <b>2 Digits (Medium)</b>: Tens place is the same, but ones place differs noticeably (e.g. 42 vs 48).';
+            return '🔟 <b>2 Digits (Medium)</b>: Same number of Tens rods, differing only in Ones unit cubes (e.g. 42 vs 48).';
         } else {
-            return '🔢 <b>2 Digits (Hard)</b>: Tens place is the same, ones place differs by only 1 or 2 (e.g. 57 vs 58).';
+            return '🔟 <b>2 Digits (Hard)</b>: Same Tens rods, Ones unit cubes differ by only 1 or 2 (e.g. 57 vs 58).';
         }
     } else {
         if (difficulty === 'easy') {
-            return '💯 <b>3 Digits (Easy)</b>: The hundreds place will be different on LHS and RHS (e.g. 245 vs 610). Child compares hundreds!';
+            return '💯 <b>3 Digits (Easy)</b>: Hundreds flats are different (e.g. 245 vs 610). Child compares hundreds!';
         } else if (difficulty === 'medium') {
-            return '💯 <b>3 Digits (Medium)</b>: The hundreds place is the same, but tens and ones place will differ (e.g. 427 vs 483).';
+            return '💯 <b>3 Digits (Medium)</b>: Same Hundreds flats, but Tens rods and Ones cubes differ (e.g. 427 vs 483).';
         } else {
-            return '💯 <b>3 Digits (Hard)</b>: The hundreds place and tens place can be the same on LHS and RHS, differing only in ones (e.g. 653 vs 658).';
+            return '💯 <b>3 Digits (Hard)</b>: Same Hundreds flats and Tens rods, differing only in Ones unit cubes (e.g. 653 vs 658).';
         }
     }
 }
@@ -437,6 +437,99 @@ function generateLevel2Numbers(targetOperator) {
         return { left: smaller, right: larger };
     } else {
         return { left: larger, right: smaller };
+    }
+}
+
+// Render base-ten place value blocks (hundred.png, ten.png, one.png) to teach place values
+function renderPlaceValueBlocks(container, number, side) {
+    const h = Math.floor(number / 100);
+    const t = Math.floor((number % 100) / 10);
+    const o = number % 10;
+    const digits = level2Settings.digits;
+
+    const board = document.createElement('div');
+    board.className = 'place-value-board';
+
+    // Top equation pill showing expanded number construction (e.g. 200 + 40 + 6 = 246)
+    const equation = document.createElement('div');
+    equation.className = 'expanded-pill';
+    if (digits === 3) {
+        equation.innerHTML = `<span>${h * 100}</span> + <span>${t * 10}</span> + <span>${o}</span> = <strong class="text-indigo-200 font-black">${number}</strong>`;
+    } else if (digits === 2) {
+        equation.innerHTML = `<span>${t * 10}</span> + <span>${o}</span> = <strong class="text-indigo-200 font-black">${number}</strong>`;
+    } else {
+        equation.innerHTML = `<span class="text-indigo-200 font-black text-lg">${number} Ones</span>`;
+    }
+    board.appendChild(equation);
+
+    const colsContainer = document.createElement('div');
+    colsContainer.className = 'place-cols-container';
+
+    // Hundreds Column (H flats)
+    if (digits >= 3) {
+        colsContainer.appendChild(createPlaceCol('Hundreds (100)', h, 'hundred', 'media/hundred.png', side, 100));
+    }
+
+    // Tens Column (T rods)
+    if (digits >= 2) {
+        colsContainer.appendChild(createPlaceCol('Tens (10)', t, 'ten', 'media/ten.png', side, 10));
+    }
+
+    // Ones Column (O unit cubes)
+    colsContainer.appendChild(createPlaceCol('Ones (1)', o, 'one', 'media/one.png', side, 1));
+
+    board.appendChild(colsContainer);
+    container.appendChild(board);
+}
+
+function createPlaceCol(title, count, typeClass, iconSrc, side, unitValue) {
+    const col = document.createElement('div');
+    col.className = `place-value-col place-col-${typeClass}`;
+
+    const badge = document.createElement('div');
+    badge.className = 'place-badge';
+    badge.innerHTML = `<span class="badge-count">${count}</span> <span class="badge-label">${title}</span>`;
+    col.appendChild(badge);
+
+    const blocksWrap = document.createElement('div');
+    blocksWrap.className = `place-blocks-wrap blocks-${typeClass}`;
+
+    if (count === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.className = 'place-empty-note';
+        emptyMsg.textContent = '0';
+        blocksWrap.appendChild(emptyMsg);
+    } else {
+        for (let i = 0; i < count; i++) {
+            const img = document.createElement('img');
+            img.src = iconSrc;
+            img.alt = `${title} block`;
+            img.className = `place-icon place-icon-${typeClass}`;
+            img.draggable = false;
+
+            // Interactive tactile audio and bump feedback when tapping blocks
+            img.addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                handleBlockTap(img, side, unitValue);
+            });
+
+            blocksWrap.appendChild(img);
+        }
+    }
+
+    col.appendChild(blocksWrap);
+    return col;
+}
+
+function handleBlockTap(img, side, unitValue) {
+    if (isAnsweringBlocked) return;
+    const isCounted = img.classList.toggle('block-counted');
+    const box = side === 'left' ? smallBoxLeft : smallBoxRight;
+    triggerBoxBump(box);
+    if (isCounted) {
+        playCountSound(unitValue === 100 ? 8 : (unitValue === 10 ? 5 : 2));
+    } else {
+        playUncountSound();
     }
 }
 
@@ -915,27 +1008,16 @@ function checkLevel0Answer() {
     }, 450);
 }
 
-// Setup Level 1: Quantities / Numbers (1 Digit: Emojis | 2 or 3 Digits: Large Numbers)
+// Setup Level 1: Quantities / Numbers (Base-ten Place Value Blocks: hundred, ten, one)
 function setupLevel1Round() {
     const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.5 ? '<' : '>');
     const generated = generateLevel2Numbers(targetOperator);
     leftCount = generated.left;
     rightCount = generated.right;
 
-    if (level2Settings.digits === 1) {
-        // 1 Digit Mode: Diverse engaging picture emojis
-        const shuffledItems = [...LEVEL_2_ITEMS].sort(() => Math.random() - 0.5);
-        const leftItem = shuffledItems[0];
-        const rightItem = shuffledItems[1];
-
-        // Draw emojis diagonally
-        drawDots(leftContainer, leftCount, leftItem.emoji, 'left');
-        drawDots(rightContainer, rightCount, rightItem.emoji, 'right');
-    } else {
-        // 2 or 3 Digit Mode: Large numbers only, no icons
-        renderNumberCard(leftContainer, leftCount);
-        renderNumberCard(rightContainer, rightCount);
-    }
+    // Render base-ten place value blocks (hundred.png, ten.png, one.png)
+    renderPlaceValueBlocks(leftContainer, leftCount, 'left');
+    renderPlaceValueBlocks(rightContainer, rightCount, 'right');
 
     countedLeft = 0;
     countedRight = 0;
@@ -1156,11 +1238,13 @@ function handleLevel1Guess(operator) {
         window.HandwritingCanvas.disable();
     }
 
-    // Reveal true totals and highlight all emojis upon answering (if in emoji mode)
+    // Reveal true totals and highlight all emojis / place-value blocks upon answering
     if (smallBoxLeft) smallBoxLeft.textContent = leftCount;
     if (smallBoxRight) smallBoxRight.textContent = rightCount;
     leftContainer.querySelectorAll('.dot').forEach(d => d.classList.add('dot-counted'));
     rightContainer.querySelectorAll('.dot').forEach(d => d.classList.add('dot-counted'));
+    leftContainer.querySelectorAll('.place-icon').forEach(b => b.classList.add('block-counted'));
+    rightContainer.querySelectorAll('.place-icon').forEach(b => b.classList.add('block-counted'));
 
     if (operator === lastButtonPressed) {
         consecutiveButtonCount++;

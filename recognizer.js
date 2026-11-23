@@ -294,23 +294,23 @@ const HandwritingCanvas = (function () {
         const h1 = analyzeHorizontalStroke(s1);
         if (!h0 || !h1) return false;
 
-        // Similar in width (within 50% of each other)
+        // Similar in width (within 55% of each other)
         const maxW = Math.max(h0.width, h1.width);
         const minW = Math.min(h0.width, h1.width);
-        if (maxW === 0 || (maxW - minW) / maxW > 0.50) return false;
+        if (maxW === 0 || (maxW - minW) / maxW > 0.55) return false;
 
         // Horizontally aligned (overlapping X ranges)
         const overlapStart = Math.max(h0.minX, h1.minX);
         const overlapEnd = Math.min(h0.maxX, h1.maxX);
         const overlapWidth = overlapEnd - overlapStart;
-        if (overlapWidth <= 0 || overlapWidth < 0.40 * minW) return false;
+        if (overlapWidth <= 0 || overlapWidth < 0.35 * minW) return false;
 
         // Vertically separated without crossing
         const topStroke = h0.avgY < h1.avgY ? h0 : h1;
         const botStroke = h0.avgY < h1.avgY ? h1 : h0;
 
         const vertSeparation = botStroke.avgY - topStroke.avgY;
-        if (vertSeparation < 8 || vertSeparation > 80) return false;
+        if (vertSeparation < 8 || vertSeparation > 95) return false;
 
         // Top stroke must not cross into bottom stroke
         if (topStroke.maxY > botStroke.minY + 6) return false;
