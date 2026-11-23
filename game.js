@@ -530,13 +530,9 @@ function handleBlockTap(img, side, unitValue) {
         if (unitValue === 1) {
             if (side === 'left') {
                 countedLeft++;
-                playCountSound(countedLeft);
             } else {
                 countedRight++;
-                playCountSound(countedRight);
             }
-        } else {
-            playCountSound(unitValue === 100 ? 8 : 5);
         }
     } else {
         if (unitValue === 1) {
@@ -546,7 +542,6 @@ function handleBlockTap(img, side, unitValue) {
                 countedRight = Math.max(0, countedRight - 1);
             }
         }
-        playUncountSound();
     }
 }
 
@@ -1178,66 +1173,16 @@ function triggerBoxBump(box) {
     box.classList.add('count-bump');
 }
 
-// Play pleasant ascending pop sound when counting
+// Silent counting (sounds disabled per user preference)
 function playCountSound(count) {
-    try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        if (!window._countAudioCtx) {
-            window._countAudioCtx = new AudioCtx();
-        }
-        const ctx = window._countAudioCtx;
-        if (ctx.state === 'suspended') {
-            ctx.resume();
-        }
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-
-        // Frequency scales up with count: musical staircase
-        const baseFreq = Math.min(440 + (count * 20), 960);
-        osc.frequency.setValueAtTime(baseFreq, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.35, ctx.currentTime + 0.07);
-
-        gain.gain.setValueAtTime(0.18, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.07);
-    } catch (e) {}
+    // No-op
 }
 
-// Play pleasant descending drop sound when uncounting
 function playUncountSound() {
-    try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        if (!window._countAudioCtx) {
-            window._countAudioCtx = new AudioCtx();
-        }
-        const ctx = window._countAudioCtx;
-        if (ctx.state === 'suspended') {
-            ctx.resume();
-        }
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(600, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + 0.07);
-
-        gain.gain.setValueAtTime(0.14, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.07);
-    } catch (e) {}
+    // No-op
 }
 
-// Handle tapping/clicking an emoji to provide tactile audio and bump feedback
+// Handle tapping/clicking an emoji to provide tactile bump feedback
 function handleDotCount(dot, side) {
     if (isAnsweringBlocked) return;
 
@@ -1250,13 +1195,11 @@ function handleDotCount(dot, side) {
             if (smallBoxLeft) {
                 triggerBoxBump(smallBoxLeft);
             }
-            playCountSound(countedLeft);
         } else {
             countedRight++;
             if (smallBoxRight) {
                 triggerBoxBump(smallBoxRight);
             }
-            playCountSound(countedRight);
         }
     } else {
         // Untap to uncount if tapped again
@@ -1272,7 +1215,6 @@ function handleDotCount(dot, side) {
                 triggerBoxBump(smallBoxRight);
             }
         }
-        playUncountSound();
     }
 }
 
