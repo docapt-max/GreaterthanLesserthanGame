@@ -21,11 +21,20 @@ let level0Targets = { left: '', right: '' };
 let placedChips = { left: null, right: null };
 let selectedChip = null;
 
-// Level 1 Variables (Quantities)
+// Level 2 Variables (Quantities)
 let leftCount = 0;
 let rightCount = 0;
 let countedLeft = 0;
 let countedRight = 0;
+
+// Level 2 Settings Configuration (Default: 1 Digit, Easy)
+const level2Settings = {
+    digits: 1, // 1 (default, with icons), 2 (1-99 numbers), 3 (1-999 numbers)
+    difficulty: 'easy' // 'easy', 'medium', 'hard'
+};
+
+let pendingDigits = 1;
+let pendingDifficulty = 'easy';
 
 // DOM Elements
 const leftContainer = document.getElementById('left-container');
@@ -40,6 +49,9 @@ const playArea = document.getElementById('play-area');
 const lvlBtn0 = document.getElementById('lvl-btn-0');
 const lvlBtn1 = document.getElementById('lvl-btn-1');
 const lvlBtn2 = document.getElementById('lvl-btn-2');
+const settingsBtn = document.getElementById('settings-btn');
+const settingsModal = document.getElementById('settings-modal');
+const settingsHint = document.getElementById('settings-hint');
 
 // Shape Color Palette (Vibrant, high-contrast, child-friendly)
 const SHAPE_COLORS = [
@@ -200,6 +212,7 @@ function updateLevelButtonsUI() {
     if (lvlBtn0) lvlBtn0.className = (currentLevel === 0) ? activeClasses : inactiveClasses;
     if (lvlBtn1) lvlBtn1.className = (currentLevel === 1) ? activeClasses : inactiveClasses;
     if (lvlBtn2) lvlBtn2.className = (currentLevel === 2) ? activeClasses : inactiveClasses;
+    if (settingsBtn) settingsBtn.style.display = (currentLevel === 2) ? 'inline-flex' : 'none';
 }
 
 // Switch between Level 0, Level 1, and Level 2
@@ -208,6 +221,231 @@ function switchLevel(lvl) {
     currentLevel = lvl;
     updateLevelButtonsUI();
     startGame();
+}
+
+// Load persistent settings from localStorage
+function loadSettings() {
+    try {
+        const savedDigits = parseInt(localStorage.getItem('gt_lt_l2_digits'), 10);
+        if ([1, 2, 3].includes(savedDigits)) {
+            level2Settings.digits = savedDigits;
+        }
+        const savedDiff = localStorage.getItem('gt_lt_l2_difficulty');
+        if (['easy', 'medium', 'hard'].includes(savedDiff)) {
+            level2Settings.difficulty = savedDiff;
+        }
+    } catch (e) {
+        console.warn('Could not load settings from localStorage', e);
+    }
+    pendingDigits = level2Settings.digits;
+    pendingDifficulty = level2Settings.difficulty;
+}
+
+function saveSettings() {
+    try {
+        localStorage.setItem('gt_lt_l2_digits', level2Settings.digits);
+        localStorage.setItem('gt_lt_l2_difficulty', level2Settings.difficulty);
+    } catch (e) {
+        console.warn('Could not save settings to localStorage', e);
+    }
+}
+
+// Settings Modal UI Handlers
+function openSettingsModal() {
+    pendingDigits = level2Settings.digits;
+    pendingDifficulty = level2Settings.difficulty;
+    updateSettingsUI();
+    if (settingsModal) {
+        settingsModal.classList.remove('hidden');
+    }
+}
+
+function closeSettingsModal() {
+    if (settingsModal) {
+        settingsModal.classList.add('hidden');
+    }
+}
+
+function selectDigitSetting(d) {
+    pendingDigits = d;
+    updateSettingsUI();
+}
+
+function selectDifficultySetting(diff) {
+    pendingDifficulty = diff;
+    updateSettingsUI();
+}
+
+function updateSettingsUI() {
+    // Digit pills
+    [1, 2, 3].forEach(d => {
+        const btn = document.getElementById(`opt-digit-${d}`);
+        if (btn) {
+            if (pendingDigits === d) {
+                btn.classList.add('setting-pill-active');
+            } else {
+                btn.classList.remove('setting-pill-active');
+            }
+        }
+    });
+
+    // Difficulty pills
+    ['easy', 'medium', 'hard'].forEach(diff => {
+        const btn = document.getElementById(`opt-diff-${diff}`);
+        if (btn) {
+            if (pendingDifficulty === diff) {
+                btn.classList.add('setting-pill-active');
+            } else {
+                btn.classList.remove('setting-pill-active');
+            }
+        }
+    });
+
+    // Hint description
+    if (settingsHint) {
+        settingsHint.innerHTML = getSettingsHintText(pendingDigits, pendingDifficulty);
+    }
+}
+
+function getSettingsHintText(digits, difficulty) {
+    if (digits === 1) {
+        if (difficulty === 'easy') {
+            return '🍎 <b>1 Digit (Easy)</b>: Large contrast with picture emojis (e.g. 2 vs 8). Child easily compares quantities visually.';
+        } else if (difficulty === 'medium') {
+            return '🍎 <b>1 Digit (Medium)</b>: Moderate count difference (differs by 2–3 items). Encourages counting emojis.';
+        } else {
+            return '🍎 <b>1 Digit (Hard)</b>: Close count difference (differs by 1 item, e.g. 4 vs 5). Requires careful counting.';
+        }
+    } else if (digits === 2) {
+        if (difficulty === 'easy') {
+            return '🔢 <b>2 Digits (Easy)</b>: The tens place will be different on LHS and RHS (e.g. 28 vs 71). Child compares the tens digit.';
+        } else if (difficulty === 'medium') {
+            return '🔢 <b>2 Digits (Medium)</b>: Tens place is the same, but ones place differs noticeably (e.g. 42 vs 48).';
+        } else {
+            return '🔢 <b>2 Digits (Hard)</b>: Tens place is the same, ones place differs by only 1 or 2 (e.g. 57 vs 58).';
+        }
+    } else {
+        if (difficulty === 'easy') {
+            return '💯 <b>3 Digits (Easy)</b>: The hundreds place will be different on LHS and RHS (e.g. 245 vs 610). Child compares hundreds!';
+        } else if (difficulty === 'medium') {
+            return '💯 <b>3 Digits (Medium)</b>: The hundreds place is the same, but tens and ones place will differ (e.g. 427 vs 483).';
+        } else {
+            return '💯 <b>3 Digits (Hard)</b>: The hundreds place and tens place can be the same on LHS and RHS, differing only in ones (e.g. 653 vs 658).';
+        }
+    }
+}
+
+function saveAndApplySettings() {
+    level2Settings.digits = pendingDigits;
+    level2Settings.difficulty = pendingDifficulty;
+    saveSettings();
+    closeSettingsModal();
+    if (currentLevel === 2) {
+        startGame();
+    }
+}
+
+// Generate numbers based on selected digits and place-value difficulty
+function generateLevel2Numbers(targetOperator) {
+    let smaller, larger;
+    const digits = level2Settings.digits;
+    const difficulty = level2Settings.difficulty;
+
+    if (digits === 1) {
+        // 1 Digit (1 to 9) - Visual Picture Icons rendered
+        if (difficulty === 'easy') {
+            // Stark visual contrast: smaller 1 to 3, larger 6 to 9 (difference >= 3 to 8)
+            smaller = Math.floor(Math.random() * 3) + 1; // 1, 2, 3
+            larger = Math.floor(Math.random() * 4) + 6;  // 6, 7, 8, 9
+        } else if (difficulty === 'medium') {
+            // Medium contrast: difference is 2 or 3
+            smaller = Math.floor(Math.random() * 5) + 1; // 1 to 5
+            const diff = Math.random() < 0.5 ? 2 : 3;
+            larger = smaller + diff;
+            if (larger > 9) {
+                larger = 9;
+                smaller = larger - diff;
+            }
+        } else {
+            // Hard: difference is 1 (e.g. 4 vs 5, 7 vs 8)
+            smaller = Math.floor(Math.random() * 8) + 1; // 1 to 8
+            larger = smaller + 1;
+        }
+    } else if (digits === 2) {
+        // 2 Digits (1 or 2 digit numbers: 1 to 99) - Numbers only, no icons
+        if (difficulty === 'easy') {
+            // Easy: The tens place will be different on LHS and RHS
+            const tensSmall = Math.floor(Math.random() * 8); // 0 to 7 (0 gives 1-digit number)
+            const tensLarge = Math.floor(Math.random() * (9 - tensSmall)) + tensSmall + 1; // (tensSmall+1) to 9
+            const ones1 = Math.floor(Math.random() * 10);
+            const ones2 = Math.floor(Math.random() * 10);
+            smaller = tensSmall === 0 ? Math.floor(Math.random() * 9) + 1 : tensSmall * 10 + ones1;
+            larger = tensLarge * 10 + ones2;
+        } else if (difficulty === 'medium') {
+            // Medium: Tens place can be same on LHS and RHS, but ones place differs (>= 3)
+            const tens = Math.floor(Math.random() * 9) + 1; // 1 to 9
+            const onesSmall = Math.floor(Math.random() * 6); // 0 to 5
+            const diff = Math.floor(Math.random() * (9 - onesSmall - 3 + 1)) + 3; // 3 to (9 - onesSmall)
+            const onesLarge = onesSmall + diff;
+            smaller = tens * 10 + onesSmall;
+            larger = tens * 10 + onesLarge;
+        } else {
+            // Hard: Tens place is the same, ones place differs by only 1 or 2
+            const tens = Math.floor(Math.random() * 9) + 1; // 1 to 9
+            const onesSmall = Math.floor(Math.random() * 8); // 0 to 7
+            const diff = (onesSmall >= 8) ? 1 : (Math.random() < 0.6 ? 1 : 2);
+            const onesLarge = onesSmall + diff;
+            smaller = tens * 10 + onesSmall;
+            larger = tens * 10 + onesLarge;
+        }
+    } else {
+        // 3 Digits (1, 2, or 3 digit numbers: 1 to 999) - Numbers only, no icons
+        if (difficulty === 'easy') {
+            // Easy: The hundreds place will be different on LHS and RHS
+            const hSmall = Math.floor(Math.random() * 8); // 0 to 7 (0 gives 1-2 digit number)
+            const hLarge = Math.floor(Math.random() * (9 - hSmall)) + hSmall + 1; // (hSmall+1) to 9
+            if (hSmall === 0) {
+                // 1 or 2 digit number
+                smaller = Math.floor(Math.random() * 95) + 5;
+            } else {
+                smaller = hSmall * 100 + Math.floor(Math.random() * 100);
+            }
+            larger = hLarge * 100 + Math.floor(Math.random() * 100);
+        } else if (difficulty === 'medium') {
+            // Medium: The hundreds place can be same on LHS and RHS, but tens and ones place won't be
+            const h = Math.floor(Math.random() * 9) + 1; // 1 to 9
+            const tensSmall = Math.floor(Math.random() * 8); // 0 to 7
+            const tensLarge = Math.floor(Math.random() * (9 - tensSmall)) + tensSmall + 1; // tensSmall+1 to 9
+            const ones1 = Math.floor(Math.random() * 10);
+            let ones2 = Math.floor(Math.random() * 10);
+            if (ones2 === ones1) ones2 = (ones1 + 1) % 10;
+            smaller = h * 100 + tensSmall * 10 + ones1;
+            larger = h * 100 + tensLarge * 10 + ones2;
+        } else {
+            // Hard: The hundreds place, tens place can be same on LHS and RHS (differing only in ones)
+            const h = Math.floor(Math.random() * 9) + 1; // 1 to 9
+            const tens = Math.floor(Math.random() * 10); // 0 to 9
+            const onesSmall = Math.floor(Math.random() * 8); // 0 to 7
+            const diff = (onesSmall >= 8) ? 1 : (Math.random() < 0.6 ? 1 : 2);
+            const onesLarge = onesSmall + diff;
+            smaller = h * 100 + tens * 10 + onesSmall;
+            larger = h * 100 + tens * 10 + onesLarge;
+        }
+    }
+
+    if (targetOperator === '<') {
+        return { left: smaller, right: larger };
+    } else {
+        return { left: larger, right: smaller };
+    }
+}
+
+// Render clean large typography for 2 and 3 digit numbers (no icons)
+function renderNumberCard(container, number) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'number-card-container';
+    wrapper.innerHTML = `<span class="number-display">${number}</span>`;
+    container.appendChild(wrapper);
 }
 
 // Calculate shape sizes ensuring smaller shape meets the required size difference
@@ -274,30 +512,33 @@ function startGame() {
         chipsContainer.style.display = 'flex';
         if (smallBoxLeft) smallBoxLeft.style.display = 'none';
         if (smallBoxRight) smallBoxRight.style.display = 'none';
+        if (settingsBtn) settingsBtn.style.display = 'none';
         if (window.HandwritingCanvas) window.HandwritingCanvas.disable();
         roundPool = generateBalancedPool(['left-small', 'left-big']);
     } else if (currentLevel === 1) {
-        // Level 1: Quantities / Emojis (<, =, >) with Handwriting Recognition Canvas
-        if (centerCol) centerCol.style.display = 'flex';
-        questionSentence.style.display = 'none'; // Uncluttered sketch layout
-        chipsContainer.style.display = 'none';
-        if (smallBoxLeft) smallBoxLeft.style.display = 'flex';
-        if (smallBoxRight) smallBoxRight.style.display = 'flex';
-        if (window.HandwritingCanvas) {
-            window.HandwritingCanvas.enable();
-            window.HandwritingCanvas.clear();
-            window.HandwritingCanvas.resize();
-        }
-        roundPool = generateBalancedPool(['<', '>', '=']);
-    } else {
-        // Level 2: Geometric Shapes (bigger / smaller)
+        // Level 1: Geometric Shapes (bigger / smaller)
         if (centerCol) centerCol.style.display = 'none';
         questionSentence.style.display = 'block';
         chipsContainer.style.display = 'flex';
         if (smallBoxLeft) smallBoxLeft.style.display = 'none';
         if (smallBoxRight) smallBoxRight.style.display = 'none';
+        if (settingsBtn) settingsBtn.style.display = 'none';
         if (window.HandwritingCanvas) window.HandwritingCanvas.disable();
         roundPool = generateBalancedPool(['bigger', 'smaller']);
+    } else {
+        // Level 2: Quantities / Numbers (<, >) with Handwriting Recognition Canvas & Settings
+        if (centerCol) centerCol.style.display = 'flex';
+        questionSentence.style.display = 'none'; // Uncluttered sketch layout
+        chipsContainer.style.display = 'none';
+        if (smallBoxLeft) smallBoxLeft.style.display = 'flex';
+        if (smallBoxRight) smallBoxRight.style.display = 'flex';
+        if (settingsBtn) settingsBtn.style.display = 'inline-flex';
+        if (window.HandwritingCanvas) {
+            window.HandwritingCanvas.enable();
+            window.HandwritingCanvas.clear();
+            window.HandwritingCanvas.resize();
+        }
+        roundPool = generateBalancedPool(['<', '>']);
     }
 
     updateLevelButtonsUI();
@@ -674,63 +915,8 @@ function checkLevel0Answer() {
     }, 450);
 }
 
-// Setup Level 1: Quantities (Various Emojis arranged diagonally from right-upper to left-lower corner, populated from center)
+// Setup Level 1: Geometric Shapes & Sizes (with "bigger" and "smaller" chips)
 function setupLevel1Round() {
-    // Pick 2 different emojis from the pool of 29 items (fruits, animals, vehicles, toys, nature)
-    const shuffledItems = [...LEVEL_2_ITEMS].sort(() => Math.random() - 0.5);
-    const leftItem = shuffledItems[0];
-    const rightItem = shuffledItems[1];
-
-    questionSentence.innerHTML = `${leftItem.emoji} ${leftItem.name} are <span id="sentence-blank" class="px-2.5 py-0.5 rounded-lg bg-slate-700/70 border border-slate-500 font-extrabold text-indigo-200">________</span> ${rightItem.emoji} ${rightItem.name}.`;
-
-    // 1, 2, or 3 for smaller number; 7, 8, or 9 for bigger number
-    const smallOptions = [1, 2, 3];
-    const largeOptions = [7, 8, 9];
-    const smallCount = smallOptions[Math.floor(Math.random() * smallOptions.length)];
-    const largeCount = largeOptions[Math.floor(Math.random() * largeOptions.length)];
-
-    const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.4 ? '<' : (Math.random() < 0.75 ? '>' : '='));
-
-    if (targetOperator === '=') {
-        const equalOptions = [2, 3, 7, 8];
-        const count = equalOptions[Math.floor(Math.random() * equalOptions.length)];
-        leftCount = count;
-        rightCount = count;
-    } else if (targetOperator === '<') {
-        leftCount = smallCount;
-        rightCount = largeCount;
-    } else {
-        leftCount = largeCount;
-        rightCount = smallCount;
-    }
-
-    countedLeft = 0;
-    countedRight = 0;
-
-    // Both sides strictly diagonal from right upper to left lower corner, populated from center
-    drawDots(leftContainer, leftCount, leftItem.emoji, 'left');
-    drawDots(rightContainer, rightCount, rightItem.emoji, 'right');
-
-    // Update the Small Boxes with numbers from start of round (no need to wait for counting)
-    if (smallBoxLeft) {
-        smallBoxLeft.style.display = 'flex';
-        smallBoxLeft.textContent = leftCount;
-    }
-    if (smallBoxRight) {
-        smallBoxRight.style.display = 'flex';
-        smallBoxRight.textContent = rightCount;
-    }
-
-    // Clear and enable handwriting recognition canvas for player to draw >, <, or =
-    if (window.HandwritingCanvas) {
-        window.HandwritingCanvas.clear();
-        window.HandwritingCanvas.enable();
-        window.HandwritingCanvas.resize();
-    }
-}
-
-// Setup Level 2: Geometric Shapes & Sizes (with "bigger" and "smaller" chips)
-function setupLevel2Round() {
     // 1. Pick geometric shape (circle, square, rectangle, equilateral triangle, pentagon)
     const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
 
@@ -740,7 +926,7 @@ function setupLevel2Round() {
     const rightColor = shuffledColors[1];
 
     // 3. Determine sizes with at least 50% difference
-    const { bigSize, smallSize } = getShapeSizes(2, shape.type);
+    const { bigSize, smallSize } = getShapeSizes(1, shape.type);
 
     // 4. Target from balanced pool: 'bigger' or 'smaller'
     const target = roundPool[currentAttempt] || (Math.random() < 0.5 ? 'bigger' : 'smaller');
@@ -776,9 +962,52 @@ function setupLevel2Round() {
         const btn = document.createElement('button');
         btn.className = 'chip-btn min-h-[52px] px-8 py-2.5 md:px-11 md:py-3.5 rounded-full text-xl md:text-2xl font-black bg-slate-800/95 text-indigo-100 hover:text-white border-2 border-indigo-400/90 shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.5)] active:scale-95 transition-all cursor-pointer select-none backdrop-blur-sm flex items-center justify-center';
         btn.textContent = choice;
-        btn.onclick = () => handleLevel2Guess(choice, target, btn);
+        btn.onclick = () => handleLevel1Guess(choice, target, btn);
         chipsContainer.appendChild(btn);
     });
+}
+
+// Setup Level 2: Quantities / Numbers (1 Digit: Emojis | 2 or 3 Digits: Large Numbers)
+function setupLevel2Round() {
+    const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.5 ? '<' : '>');
+    const generated = generateLevel2Numbers(targetOperator);
+    leftCount = generated.left;
+    rightCount = generated.right;
+
+    if (level2Settings.digits === 1) {
+        // 1 Digit Mode: Diverse engaging picture emojis
+        const shuffledItems = [...LEVEL_2_ITEMS].sort(() => Math.random() - 0.5);
+        const leftItem = shuffledItems[0];
+        const rightItem = shuffledItems[1];
+
+        // Draw emojis diagonally
+        drawDots(leftContainer, leftCount, leftItem.emoji, 'left');
+        drawDots(rightContainer, rightCount, rightItem.emoji, 'right');
+    } else {
+        // 2 or 3 Digit Mode: Large numbers only, no icons
+        renderNumberCard(leftContainer, leftCount);
+        renderNumberCard(rightContainer, rightCount);
+    }
+
+    countedLeft = 0;
+    countedRight = 0;
+
+    // Small boxes below containers show the counts/numbers
+    if (smallBoxLeft) {
+        smallBoxLeft.style.display = 'flex';
+        smallBoxLeft.textContent = leftCount;
+    }
+    if (smallBoxRight) {
+        smallBoxRight.style.display = 'flex';
+        smallBoxRight.textContent = rightCount;
+    }
+
+    // Clear and enable handwriting recognition canvas for player to draw > or <
+    if (window.HandwritingCanvas) {
+        window.HandwritingCanvas.clear();
+        window.HandwritingCanvas.enable();
+        window.HandwritingCanvas.resize();
+    }
 }
 
 // Draw emojis arranged diagonally from right-upper to left-lower corner, populated outward from the center
@@ -914,10 +1143,67 @@ function handleDotCount(dot, side) {
     }
 }
 
-// Handle Level 1 Symbol Input (<, >, or =)
-function handleLevel1Guess(operator, targetChoice, chipBtn) {
+// Handle Level 1 Chip Tap ("bigger" or "smaller")
+function handleLevel1Guess(choice, targetChoice, chipBtn) {
+    if (choice === '<' || choice === '>' || choice === '=') {
+        return handleLevel2Guess(choice);
+    }
+    if (isAnsweringBlocked) return;
+    isAnsweringBlocked = true;
+
+    // Anti-spam guard: track consecutive same button presses
+    if (choice === lastButtonPressed) {
+        consecutiveButtonCount++;
+    } else {
+        lastButtonPressed = choice;
+        consecutiveButtonCount = 1;
+        consecutivePointsFromCurrentButton = 0;
+    }
+
+    let isCorrect = (choice === targetChoice);
+
+    if (isCorrect) {
+        if (consecutivePointsFromCurrentButton >= 5) {
+            isCorrect = false;
+        } else {
+            consecutivePointsFromCurrentButton++;
+        }
+    }
+
+    const sentenceBlank = document.getElementById('sentence-blank');
+
+    if (isCorrect) {
+        if (chipBtn) chipBtn.classList.add('chip-correct');
+        if (sentenceBlank) {
+            sentenceBlank.innerHTML = `<span class="text-emerald-400 font-extrabold">${choice}</span>`;
+            sentenceBlank.className = 'px-2.5 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-400 font-extrabold text-emerald-300';
+        }
+        score++;
+    } else {
+        if (chipBtn) chipBtn.classList.add('chip-wrong');
+        if (sentenceBlank) {
+            sentenceBlank.innerHTML = `<span class="text-rose-400 font-extrabold">${choice}</span>`;
+            sentenceBlank.className = 'px-2.5 py-0.5 rounded-lg bg-rose-500/20 border border-rose-400 font-extrabold text-rose-300';
+        }
+        wrongAnswers++;
+    }
+
+    attemptHistory.push(isCorrect);
+    showEmojiFeedback(isCorrect);
+    updateScoreboardUI();
+    updateLivesUI(!isCorrect);
+    currentAttempt++;
+
+    // Pause and wait for child to reflect instead of auto-advancing
+    setTimeout(() => {
+        showNextPrompt();
+    }, 450);
+}
+
+// Handle Level 2 Symbol Input (<, >, or =)
+function handleLevel2Guess(operator) {
     if (operator === 'bigger' || operator === 'smaller') {
-        return handleLevel2Guess(operator, targetChoice, chipBtn);
+        return handleLevel1Guess(operator);
     }
     if (isAnsweringBlocked) return;
     isAnsweringBlocked = true;
@@ -927,7 +1213,7 @@ function handleLevel1Guess(operator, targetChoice, chipBtn) {
         window.HandwritingCanvas.disable();
     }
 
-    // Reveal true totals and highlight all emojis upon answering
+    // Reveal true totals and highlight all emojis upon answering (if in emoji mode)
     if (smallBoxLeft) smallBoxLeft.textContent = leftCount;
     if (smallBoxRight) smallBoxRight.textContent = rightCount;
     leftContainer.querySelectorAll('.dot').forEach(d => d.classList.add('dot-counted'));
@@ -990,63 +1276,6 @@ function handleLevel1Guess(operator, targetChoice, chipBtn) {
     }
     attemptHistory.push(isCorrect);
 
-    updateScoreboardUI();
-    updateLivesUI(!isCorrect);
-    currentAttempt++;
-
-    // Pause and wait for child to reflect instead of auto-advancing
-    setTimeout(() => {
-        showNextPrompt();
-    }, 450);
-}
-
-// Handle Level 2 Chip Tap ("bigger" or "smaller")
-function handleLevel2Guess(choice, targetChoice, chipBtn) {
-    if (choice === '<' || choice === '>') {
-        return handleLevel1Guess(choice);
-    }
-    if (isAnsweringBlocked) return;
-    isAnsweringBlocked = true;
-
-    // Anti-spam guard: track consecutive same button presses
-    if (choice === lastButtonPressed) {
-        consecutiveButtonCount++;
-    } else {
-        lastButtonPressed = choice;
-        consecutiveButtonCount = 1;
-        consecutivePointsFromCurrentButton = 0;
-    }
-
-    let isCorrect = (choice === targetChoice);
-
-    if (isCorrect) {
-        if (consecutivePointsFromCurrentButton >= 5) {
-            isCorrect = false;
-        } else {
-            consecutivePointsFromCurrentButton++;
-        }
-    }
-
-    const sentenceBlank = document.getElementById('sentence-blank');
-
-    if (isCorrect) {
-        chipBtn.classList.add('chip-correct');
-        if (sentenceBlank) {
-            sentenceBlank.innerHTML = `<span class="text-emerald-400 font-extrabold">${choice}</span>`;
-            sentenceBlank.className = 'px-2.5 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-400 font-extrabold text-emerald-300';
-        }
-        score++;
-    } else {
-        chipBtn.classList.add('chip-wrong');
-        if (sentenceBlank) {
-            sentenceBlank.innerHTML = `<span class="text-rose-400 font-extrabold">${choice}</span>`;
-            sentenceBlank.className = 'px-2.5 py-0.5 rounded-lg bg-rose-500/20 border border-rose-400 font-extrabold text-rose-300';
-        }
-        wrongAnswers++;
-    }
-
-    attemptHistory.push(isCorrect);
-    showEmojiFeedback(isCorrect);
     updateScoreboardUI();
     updateLivesUI(!isCorrect);
     currentAttempt++;
@@ -1211,14 +1440,26 @@ function endGame(isThreeStrikes = false) {
 
 // Global callback for handwriting symbol recognition
 function onSymbolRecognized(symbol) {
-    if (currentLevel === 1) {
-        handleLevel1Guess(symbol);
+    if (currentLevel === 2) {
+        handleLevel2Guess(symbol);
+    } else if (currentLevel === 1) {
+        handleLevel2Guess(symbol);
     }
 }
 window.onSymbolRecognized = onSymbolRecognized;
 
+// Close settings modal when clicking outside on dark backdrop
+if (settingsModal) {
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+            closeSettingsModal();
+        }
+    });
+}
+
 // Start Game on window load
 window.onload = () => {
+    loadSettings();
     if (window.HandwritingCanvas) {
         window.HandwritingCanvas.init({
             canvasId: 'handwriting-canvas',

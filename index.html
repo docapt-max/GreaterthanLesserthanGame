@@ -36,20 +36,34 @@
                 <span>❤️</span>
             </div>
 
-            <!-- Top Right: Level Switcher (50% transparent) -->
-            <div id="level-switcher"
-                class="flex items-center bg-slate-800/80 p-1 rounded-full border border-slate-600/80 shadow-md select-none backdrop-blur-sm gap-1 opacity-50 hover:opacity-100 active:opacity-100 transition-opacity">
-                <button id="lvl-btn-0" onclick="switchLevel(0)"
-                    class="px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-md flex items-center justify-center">
-                    Level 0
-                </button>
-                <button id="lvl-btn-1" onclick="switchLevel(1)"
-                    class="px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center">
-                    Level 1
-                </button>
-                <button id="lvl-btn-2" onclick="switchLevel(2)"
-                    class="px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center">
-                    Level 2
+            <!-- Top Right: Level Switcher & Settings Gear (50% transparent) -->
+            <div class="flex items-center gap-2">
+                <div id="level-switcher"
+                    class="flex items-center bg-slate-800/80 p-1 rounded-full border border-slate-600/80 shadow-md select-none backdrop-blur-sm gap-1 opacity-50 hover:opacity-100 active:opacity-100 transition-opacity">
+                    <button id="lvl-btn-0" onclick="switchLevel(0)"
+                        class="px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-md flex items-center justify-center">
+                        Level 0
+                    </button>
+                    <button id="lvl-btn-1" onclick="switchLevel(1)"
+                        class="px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center">
+                        Level 1
+                    </button>
+                    <button id="lvl-btn-2" onclick="switchLevel(2)"
+                        class="px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center">
+                        Level 2
+                    </button>
+                </div>
+
+                <!-- Settings Gear Icon (Level 2 only) -->
+                <button id="settings-btn" onclick="openSettingsModal()" aria-label="Level 2 Settings"
+                    class="hidden bg-slate-800/80 p-2 rounded-full border border-slate-600/80 shadow-md text-slate-300 hover:text-white active:scale-95 transition-all items-center justify-center min-w-[38px] min-h-[38px] opacity-60 hover:opacity-100 active:opacity-100 cursor-pointer"
+                    title="Level 2 Settings">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
                 </button>
             </div>
         </div>
@@ -128,6 +142,68 @@
         class="hidden px-8 py-2.5 md:px-11 md:py-3 rounded-full text-lg md:text-xl font-black text-white bg-gradient-to-r from-emerald-500 via-indigo-500 to-purple-600 hover:from-emerald-400 hover:to-purple-500 border-2 border-indigo-300 shadow-[0_0_35px_rgba(99,102,241,0.75),0_8px_25px_rgba(0,0,0,0.6)] cursor-pointer select-none items-center justify-center whitespace-nowrap">
         Next ➡️
     </button>
+
+    <!-- Settings Modal (Level 2 Configuration) -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-slate-700 rounded-3xl p-5 md:p-6 shadow-[0_0_50px_rgba(0,0,0,0.85)] max-w-md w-full text-white animate-popIn">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">⚙️</span>
+                    <h3 class="text-xl font-black text-white">Level 2 Settings</h3>
+                </div>
+                <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-lg font-bold transition-all cursor-pointer">✕</button>
+            </div>
+
+            <!-- Option 1: Digits -->
+            <div class="mb-4">
+                <label class="block text-xs font-black uppercase tracking-wider text-indigo-300 mb-2">Number of Digits</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button id="opt-digit-1" onclick="selectDigitSetting(1)" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
+                        <span class="text-base font-black">1 Digit</span>
+                        <span class="text-[10px] text-indigo-200/80 font-medium mt-0.5">With Icons 🍎</span>
+                    </button>
+                    <button id="opt-digit-2" onclick="selectDigitSetting(2)" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
+                        <span class="text-base font-black">2 Digits</span>
+                        <span class="text-[10px] text-indigo-200/80 font-medium mt-0.5">1 – 99</span>
+                    </button>
+                    <button id="opt-digit-3" onclick="selectDigitSetting(3)" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
+                        <span class="text-base font-black">3 Digits</span>
+                        <span class="text-[10px] text-indigo-200/80 font-medium mt-0.5">1 – 999</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Option 2: Difficulty Mode -->
+            <div class="mb-4">
+                <label class="block text-xs font-black uppercase tracking-wider text-indigo-300 mb-2">Difficulty Mode</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button id="opt-diff-easy" onclick="selectDifficultySetting('easy')" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
+                        <span class="text-base font-black text-emerald-400">Easy</span>
+                        <span class="text-[10px] text-slate-300 font-medium mt-0.5">Starter</span>
+                    </button>
+                    <button id="opt-diff-medium" onclick="selectDifficultySetting('medium')" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
+                        <span class="text-base font-black text-amber-400">Medium</span>
+                        <span class="text-[10px] text-slate-300 font-medium mt-0.5">Tens Place</span>
+                    </button>
+                    <button id="opt-diff-hard" onclick="selectDifficultySetting('hard')" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
+                        <span class="text-base font-black text-rose-400">Hard</span>
+                        <span class="text-[10px] text-slate-300 font-medium mt-0.5">Ones Place</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Hint / Explanation Box -->
+            <div id="settings-hint" class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-xs text-indigo-200 mb-5 leading-relaxed">
+                <!-- Injected dynamically -->
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2.5">
+                <button onclick="closeSettingsModal()" class="flex-1 min-h-[46px] py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-bold text-sm transition-all cursor-pointer">Cancel</button>
+                <button onclick="saveAndApplySettings()" class="flex-1 min-h-[46px] py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 active:scale-95 text-white font-extrabold text-sm shadow-lg transition-all cursor-pointer">Save &amp; Play 🎮</button>
+            </div>
+        </div>
+    </div>
 
     <script src="recognizer.js"></script>
     <script src="game.js"></script>

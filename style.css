@@ -23,13 +23,58 @@ body {
 }
 
 /* Optimized Touch Targets & Touch Feel for iPad 10.2" Landscape */
-button, .chip-btn, #btn-clear-canvas, #lvl-btn-0, #lvl-btn-1, #lvl-btn-2 {
+button, .chip-btn, .setting-pill, #btn-clear-canvas, #lvl-btn-0, #lvl-btn-1, #lvl-btn-2, #settings-btn {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
     cursor: pointer;
+}
+
+/* Settings Pill Active / Inactive States */
+.setting-pill {
+    background-color: rgba(30, 41, 59, 0.7);
+    border-color: rgba(71, 85, 105, 0.5);
+    color: #94a3b8;
+}
+
+.setting-pill:hover {
+    background-color: rgba(51, 65, 85, 0.8);
+    border-color: rgba(99, 102, 241, 0.5);
+    color: #e2e8f0;
+}
+
+.setting-pill-active {
+    background-color: rgba(79, 70, 229, 0.25) !important;
+    border-color: #818cf8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.45);
+}
+
+/* Number Card Display (Level 2: 2-Digit and 3-Digit Modes) */
+.number-card-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: shapePopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    user-select: none;
+    pointer-events: none;
+}
+
+.number-display {
+    font-size: clamp(4.5rem, 11vw, 8rem);
+    font-weight: 900;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 55%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.7));
+    user-select: none;
 }
 
 /* Level Switcher 50% Transparency */
