@@ -310,11 +310,11 @@ function updateSettingsUI() {
 function getSettingsHintText(digits, difficulty) {
     if (digits === 1) {
         if (difficulty === 'easy') {
-            return '🟦 <b>1 Digit (Easy)</b>: Large contrast with Ones unit blocks (e.g. 2 vs 8). Child compares unit cubes.';
+            return '🍎 <b>1 Digit (Easy)</b>: Large contrast with picture emojis (e.g. 2 vs 8). Child easily compares quantities visually.';
         } else if (difficulty === 'medium') {
-            return '🟦 <b>1 Digit (Medium)</b>: Moderate count difference (differs by 2–3 unit cubes).';
+            return '🍎 <b>1 Digit (Medium)</b>: Moderate count difference (differs by 2–3 items). Encourages counting emojis.';
         } else {
-            return '🟦 <b>1 Digit (Hard)</b>: Close count difference (differs by 1 unit cube, e.g. 4 vs 5).';
+            return '🍎 <b>1 Digit (Hard)</b>: Close count difference (differs by 1 item, e.g. 4 vs 5). Requires careful counting.';
         }
     } else if (digits === 2) {
         if (difficulty === 'easy') {
@@ -1008,16 +1008,27 @@ function checkLevel0Answer() {
     }, 450);
 }
 
-// Setup Level 1: Quantities / Numbers (Base-ten Place Value Blocks: hundred, ten, one)
+// Setup Level 1: Quantities / Numbers (1 Digit: Emojis | 2 or 3 Digits: Place Value Blocks)
 function setupLevel1Round() {
     const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.5 ? '<' : '>');
     const generated = generateLevel2Numbers(targetOperator);
     leftCount = generated.left;
     rightCount = generated.right;
 
-    // Render base-ten place value blocks (hundred.png, ten.png, one.png)
-    renderPlaceValueBlocks(leftContainer, leftCount, 'left');
-    renderPlaceValueBlocks(rightContainer, rightCount, 'right');
+    if (level2Settings.digits === 1) {
+        // 1 Digit Mode: Diverse engaging picture emojis
+        const shuffledItems = [...LEVEL_2_ITEMS].sort(() => Math.random() - 0.5);
+        const leftItem = shuffledItems[0];
+        const rightItem = shuffledItems[1];
+
+        // Draw emojis diagonally
+        drawDots(leftContainer, leftCount, leftItem.emoji, 'left');
+        drawDots(rightContainer, rightCount, rightItem.emoji, 'right');
+    } else {
+        // 2 or 3 Digit Mode: Base-ten place value blocks (hundred.png, ten.png, one.png)
+        renderPlaceValueBlocks(leftContainer, leftCount, 'left');
+        renderPlaceValueBlocks(rightContainer, rightCount, 'right');
+    }
 
     countedLeft = 0;
     countedRight = 0;
