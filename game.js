@@ -310,11 +310,11 @@ function updateSettingsUI() {
 function getSettingsHintText(digits, difficulty) {
     if (digits === 1) {
         if (difficulty === 'easy') {
-            return '🍎 <b>1 Digit (Easy)</b>: Large contrast with picture emojis (e.g. 2 vs 8). Child easily compares quantities visually.';
+            return '🧊 <b>1 Digit (Easy)</b>: Large contrast with vertically stacked unit cubes (e.g. 2 vs 8). Child compares stack heights!';
         } else if (difficulty === 'medium') {
-            return '🍎 <b>1 Digit (Medium)</b>: Moderate count difference (differs by 2–3 items). Encourages counting emojis.';
+            return '🧊 <b>1 Digit (Medium)</b>: Moderate count difference (differs by 2–3 stacked cubes). Encourages counting.';
         } else {
-            return '🍎 <b>1 Digit (Hard)</b>: Close count difference (differs by 1 item, e.g. 4 vs 5). Requires careful counting.';
+            return '🧊 <b>1 Digit (Hard)</b>: Close count difference (differs by 1 stacked cube, e.g. 4 vs 5). Requires careful counting.';
         }
     } else if (digits === 2) {
         if (difficulty === 'easy') {
@@ -527,10 +527,55 @@ function handleBlockTap(img, side, unitValue) {
     const box = side === 'left' ? smallBoxLeft : smallBoxRight;
     triggerBoxBump(box);
     if (isCounted) {
-        playCountSound(unitValue === 100 ? 8 : (unitValue === 10 ? 5 : 2));
+        if (unitValue === 1) {
+            if (side === 'left') {
+                countedLeft++;
+                playCountSound(countedLeft);
+            } else {
+                countedRight++;
+                playCountSound(countedRight);
+            }
+        } else {
+            playCountSound(unitValue === 100 ? 8 : 5);
+        }
     } else {
+        if (unitValue === 1) {
+            if (side === 'left') {
+                countedLeft = Math.max(0, countedLeft - 1);
+            } else {
+                countedRight = Math.max(0, countedRight - 1);
+            }
+        }
         playUncountSound();
     }
+}
+
+// Render vertically stacked unit cubes (media/one.png) for 1-Digit mode
+function renderVerticalUnitStack(container, count, side) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'vertical-unit-stack-wrapper';
+
+    const stack = document.createElement('div');
+    stack.className = 'vertical-unit-stack';
+
+    for (let i = 0; i < count; i++) {
+        const img = document.createElement('img');
+        img.src = 'media/one.png';
+        img.alt = 'Unit cube';
+        img.className = 'place-icon unit-stack-icon';
+        img.draggable = false;
+
+        // Interactive tactile audio and bump feedback when tapping blocks
+        img.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            handleBlockTap(img, side, 1);
+        });
+
+        stack.appendChild(img);
+    }
+
+    wrapper.appendChild(stack);
+    container.appendChild(wrapper);
 }
 
 // Render clean large typography for 2 and 3 digit numbers (no icons)
@@ -1008,7 +1053,7 @@ function checkLevel0Answer() {
     }, 450);
 }
 
-// Setup Level 1: Quantities / Numbers (1 Digit: Emojis | 2 or 3 Digits: Place Value Blocks)
+// Setup Level 1: Quantities / Numbers (1 Digit: Vertical one.png Stack | 2 or 3 Digits: Place Value Blocks)
 function setupLevel1Round() {
     const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.5 ? '<' : '>');
     const generated = generateLevel2Numbers(targetOperator);
@@ -1016,14 +1061,9 @@ function setupLevel1Round() {
     rightCount = generated.right;
 
     if (level2Settings.digits === 1) {
-        // 1 Digit Mode: Diverse engaging picture emojis
-        const shuffledItems = [...LEVEL_2_ITEMS].sort(() => Math.random() - 0.5);
-        const leftItem = shuffledItems[0];
-        const rightItem = shuffledItems[1];
-
-        // Draw emojis diagonally
-        drawDots(leftContainer, leftCount, leftItem.emoji, 'left');
-        drawDots(rightContainer, rightCount, rightItem.emoji, 'right');
+        // 1 Digit Mode: Non-distracting unit cubes stacked vertically (one.png)
+        renderVerticalUnitStack(leftContainer, leftCount, 'left');
+        renderVerticalUnitStack(rightContainer, rightCount, 'right');
     } else {
         // 2 or 3 Digit Mode: Base-ten place value blocks (hundred.png, ten.png, one.png)
         renderPlaceValueBlocks(leftContainer, leftCount, 'left');
