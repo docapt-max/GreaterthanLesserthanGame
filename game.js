@@ -212,7 +212,7 @@ function updateLevelButtonsUI() {
     if (lvlBtn0) lvlBtn0.className = (currentLevel === 0) ? activeClasses : inactiveClasses;
     if (lvlBtn1) lvlBtn1.className = (currentLevel === 1) ? activeClasses : inactiveClasses;
     if (lvlBtn2) lvlBtn2.className = (currentLevel === 2) ? activeClasses : inactiveClasses;
-    if (settingsBtn) settingsBtn.style.display = (currentLevel === 2) ? 'inline-flex' : 'none';
+    if (settingsBtn) settingsBtn.style.display = (currentLevel === 1) ? 'inline-flex' : 'none';
 }
 
 // Switch between Level 0, Level 1, and Level 2
@@ -340,7 +340,7 @@ function saveAndApplySettings() {
     level2Settings.difficulty = pendingDifficulty;
     saveSettings();
     closeSettingsModal();
-    if (currentLevel === 2) {
+    if (currentLevel === 1) {
         startGame();
     }
 }
@@ -516,17 +516,7 @@ function startGame() {
         if (window.HandwritingCanvas) window.HandwritingCanvas.disable();
         roundPool = generateBalancedPool(['left-small', 'left-big']);
     } else if (currentLevel === 1) {
-        // Level 1: Geometric Shapes (bigger / smaller)
-        if (centerCol) centerCol.style.display = 'none';
-        questionSentence.style.display = 'block';
-        chipsContainer.style.display = 'flex';
-        if (smallBoxLeft) smallBoxLeft.style.display = 'none';
-        if (smallBoxRight) smallBoxRight.style.display = 'none';
-        if (settingsBtn) settingsBtn.style.display = 'none';
-        if (window.HandwritingCanvas) window.HandwritingCanvas.disable();
-        roundPool = generateBalancedPool(['bigger', 'smaller']);
-    } else {
-        // Level 2: Quantities / Numbers (<, >) with Handwriting Recognition Canvas & Settings
+        // Level 1: Quantities / Numbers (<, >) with Handwriting Recognition Canvas & Settings
         if (centerCol) centerCol.style.display = 'flex';
         questionSentence.style.display = 'none'; // Uncluttered sketch layout
         chipsContainer.style.display = 'none';
@@ -539,6 +529,16 @@ function startGame() {
             window.HandwritingCanvas.resize();
         }
         roundPool = generateBalancedPool(['<', '>']);
+    } else {
+        // Level 2: Geometric Shapes (bigger / smaller)
+        if (centerCol) centerCol.style.display = 'none';
+        questionSentence.style.display = 'block';
+        chipsContainer.style.display = 'flex';
+        if (smallBoxLeft) smallBoxLeft.style.display = 'none';
+        if (smallBoxRight) smallBoxRight.style.display = 'none';
+        if (settingsBtn) settingsBtn.style.display = 'none';
+        if (window.HandwritingCanvas) window.HandwritingCanvas.disable();
+        roundPool = generateBalancedPool(['bigger', 'smaller']);
     }
 
     updateLevelButtonsUI();
@@ -915,60 +915,8 @@ function checkLevel0Answer() {
     }, 450);
 }
 
-// Setup Level 1: Geometric Shapes & Sizes (with "bigger" and "smaller" chips)
+// Setup Level 1: Quantities / Numbers (1 Digit: Emojis | 2 or 3 Digits: Large Numbers)
 function setupLevel1Round() {
-    // 1. Pick geometric shape (circle, square, rectangle, equilateral triangle, pentagon)
-    const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-
-    // 2. Pick 2 different colors
-    const shuffledColors = [...SHAPE_COLORS].sort(() => Math.random() - 0.5);
-    const leftColor = shuffledColors[0];
-    const rightColor = shuffledColors[1];
-
-    // 3. Determine sizes with at least 50% difference
-    const { bigSize, smallSize } = getShapeSizes(1, shape.type);
-
-    // 4. Target from balanced pool: 'bigger' or 'smaller'
-    const target = roundPool[currentAttempt] || (Math.random() < 0.5 ? 'bigger' : 'smaller');
-
-    let leftSize, rightSize;
-    if (target === 'bigger') {
-        leftSize = bigSize;
-        rightSize = smallSize;
-    } else {
-        leftSize = smallSize;
-        rightSize = bigSize;
-    }
-
-    // 5. Render Shapes in Boxes
-    const leftWrapper = document.createElement('div');
-    leftWrapper.className = 'shape-container';
-    leftWrapper.innerHTML = shape.render(leftColor.hex, leftSize);
-    leftContainer.appendChild(leftWrapper);
-
-    const rightWrapper = document.createElement('div');
-    rightWrapper.className = 'shape-container';
-    rightWrapper.innerHTML = shape.render(rightColor.hex, rightSize);
-    rightContainer.appendChild(rightWrapper);
-
-    // 6. Sentence: "The [color1] [shape] is ______ than the [color2] [shape]."
-    questionSentence.innerHTML = `The <span style="color: ${leftColor.textHex}; font-weight: 800;">${leftColor.name}</span> ${shape.name} is <span id="sentence-blank" class="px-2.5 py-0.5 rounded-lg bg-slate-700/70 border border-slate-500 font-extrabold text-indigo-200">______</span> than the <span style="color: ${rightColor.textHex}; font-weight: 800;">${rightColor.name}</span> ${shape.name}.`;
-
-    // 7. Render "bigger" and "smaller" chips just above the boxes
-    chipsContainer.innerHTML = '';
-    const chipChoices = Math.random() < 0.5 ? ['bigger', 'smaller'] : ['smaller', 'bigger'];
-
-    chipChoices.forEach(choice => {
-        const btn = document.createElement('button');
-        btn.className = 'chip-btn min-h-[52px] px-8 py-2.5 md:px-11 md:py-3.5 rounded-full text-xl md:text-2xl font-black bg-slate-800/95 text-indigo-100 hover:text-white border-2 border-indigo-400/90 shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.5)] active:scale-95 transition-all cursor-pointer select-none backdrop-blur-sm flex items-center justify-center';
-        btn.textContent = choice;
-        btn.onclick = () => handleLevel1Guess(choice, target, btn);
-        chipsContainer.appendChild(btn);
-    });
-}
-
-// Setup Level 2: Quantities / Numbers (1 Digit: Emojis | 2 or 3 Digits: Large Numbers)
-function setupLevel2Round() {
     const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.5 ? '<' : '>');
     const generated = generateLevel2Numbers(targetOperator);
     leftCount = generated.left;
@@ -1008,6 +956,58 @@ function setupLevel2Round() {
         window.HandwritingCanvas.enable();
         window.HandwritingCanvas.resize();
     }
+}
+
+// Setup Level 2: Geometric Shapes & Sizes (with "bigger" and "smaller" chips)
+function setupLevel2Round() {
+    // 1. Pick geometric shape (circle, square, rectangle, equilateral triangle, pentagon)
+    const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+
+    // 2. Pick 2 different colors
+    const shuffledColors = [...SHAPE_COLORS].sort(() => Math.random() - 0.5);
+    const leftColor = shuffledColors[0];
+    const rightColor = shuffledColors[1];
+
+    // 3. Determine sizes with at least 50% difference
+    const { bigSize, smallSize } = getShapeSizes(2, shape.type);
+
+    // 4. Target from balanced pool: 'bigger' or 'smaller'
+    const target = roundPool[currentAttempt] || (Math.random() < 0.5 ? 'bigger' : 'smaller');
+
+    let leftSize, rightSize;
+    if (target === 'bigger') {
+        leftSize = bigSize;
+        rightSize = smallSize;
+    } else {
+        leftSize = smallSize;
+        rightSize = bigSize;
+    }
+
+    // 5. Render Shapes in Boxes
+    const leftWrapper = document.createElement('div');
+    leftWrapper.className = 'shape-container';
+    leftWrapper.innerHTML = shape.render(leftColor.hex, leftSize);
+    leftContainer.appendChild(leftWrapper);
+
+    const rightWrapper = document.createElement('div');
+    rightWrapper.className = 'shape-container';
+    rightWrapper.innerHTML = shape.render(rightColor.hex, rightSize);
+    rightContainer.appendChild(rightWrapper);
+
+    // 6. Sentence: "The [color1] [shape] is ______ than the [color2] [shape]."
+    questionSentence.innerHTML = `The <span style="color: ${leftColor.textHex}; font-weight: 800;">${leftColor.name}</span> ${shape.name} is <span id="sentence-blank" class="px-2.5 py-0.5 rounded-lg bg-slate-700/70 border border-slate-500 font-extrabold text-indigo-200">______</span> than the <span style="color: ${rightColor.textHex}; font-weight: 800;">${rightColor.name}</span> ${shape.name}.`;
+
+    // 7. Render "bigger" and "smaller" chips just above the boxes
+    chipsContainer.innerHTML = '';
+    const chipChoices = Math.random() < 0.5 ? ['bigger', 'smaller'] : ['smaller', 'bigger'];
+
+    chipChoices.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = 'chip-btn min-h-[52px] px-8 py-2.5 md:px-11 md:py-3.5 rounded-full text-xl md:text-2xl font-black bg-slate-800/95 text-indigo-100 hover:text-white border-2 border-indigo-400/90 shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.5)] active:scale-95 transition-all cursor-pointer select-none backdrop-blur-sm flex items-center justify-center';
+        btn.textContent = choice;
+        btn.onclick = () => handleLevel2Guess(choice, target, btn);
+        chipsContainer.appendChild(btn);
+    });
 }
 
 // Draw emojis arranged diagonally from right-upper to left-lower corner, populated outward from the center
@@ -1143,67 +1143,10 @@ function handleDotCount(dot, side) {
     }
 }
 
-// Handle Level 1 Chip Tap ("bigger" or "smaller")
-function handleLevel1Guess(choice, targetChoice, chipBtn) {
-    if (choice === '<' || choice === '>' || choice === '=') {
-        return handleLevel2Guess(choice);
-    }
-    if (isAnsweringBlocked) return;
-    isAnsweringBlocked = true;
-
-    // Anti-spam guard: track consecutive same button presses
-    if (choice === lastButtonPressed) {
-        consecutiveButtonCount++;
-    } else {
-        lastButtonPressed = choice;
-        consecutiveButtonCount = 1;
-        consecutivePointsFromCurrentButton = 0;
-    }
-
-    let isCorrect = (choice === targetChoice);
-
-    if (isCorrect) {
-        if (consecutivePointsFromCurrentButton >= 5) {
-            isCorrect = false;
-        } else {
-            consecutivePointsFromCurrentButton++;
-        }
-    }
-
-    const sentenceBlank = document.getElementById('sentence-blank');
-
-    if (isCorrect) {
-        if (chipBtn) chipBtn.classList.add('chip-correct');
-        if (sentenceBlank) {
-            sentenceBlank.innerHTML = `<span class="text-emerald-400 font-extrabold">${choice}</span>`;
-            sentenceBlank.className = 'px-2.5 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-400 font-extrabold text-emerald-300';
-        }
-        score++;
-    } else {
-        if (chipBtn) chipBtn.classList.add('chip-wrong');
-        if (sentenceBlank) {
-            sentenceBlank.innerHTML = `<span class="text-rose-400 font-extrabold">${choice}</span>`;
-            sentenceBlank.className = 'px-2.5 py-0.5 rounded-lg bg-rose-500/20 border border-rose-400 font-extrabold text-rose-300';
-        }
-        wrongAnswers++;
-    }
-
-    attemptHistory.push(isCorrect);
-    showEmojiFeedback(isCorrect);
-    updateScoreboardUI();
-    updateLivesUI(!isCorrect);
-    currentAttempt++;
-
-    // Pause and wait for child to reflect instead of auto-advancing
-    setTimeout(() => {
-        showNextPrompt();
-    }, 450);
-}
-
-// Handle Level 2 Symbol Input (<, >, or =)
-function handleLevel2Guess(operator) {
+// Handle Level 1 Symbol Input (<, >, or =)
+function handleLevel1Guess(operator) {
     if (operator === 'bigger' || operator === 'smaller') {
-        return handleLevel1Guess(operator);
+        return handleLevel2Guess(operator);
     }
     if (isAnsweringBlocked) return;
     isAnsweringBlocked = true;
@@ -1276,6 +1219,63 @@ function handleLevel2Guess(operator) {
     }
     attemptHistory.push(isCorrect);
 
+    updateScoreboardUI();
+    updateLivesUI(!isCorrect);
+    currentAttempt++;
+
+    // Pause and wait for child to reflect instead of auto-advancing
+    setTimeout(() => {
+        showNextPrompt();
+    }, 450);
+}
+
+// Handle Level 2 Chip Tap ("bigger" or "smaller")
+function handleLevel2Guess(choice, targetChoice, chipBtn) {
+    if (choice === '<' || choice === '>' || choice === '=') {
+        return handleLevel1Guess(choice);
+    }
+    if (isAnsweringBlocked) return;
+    isAnsweringBlocked = true;
+
+    // Anti-spam guard: track consecutive same button presses
+    if (choice === lastButtonPressed) {
+        consecutiveButtonCount++;
+    } else {
+        lastButtonPressed = choice;
+        consecutiveButtonCount = 1;
+        consecutivePointsFromCurrentButton = 0;
+    }
+
+    let isCorrect = (choice === targetChoice);
+
+    if (isCorrect) {
+        if (consecutivePointsFromCurrentButton >= 5) {
+            isCorrect = false;
+        } else {
+            consecutivePointsFromCurrentButton++;
+        }
+    }
+
+    const sentenceBlank = document.getElementById('sentence-blank');
+
+    if (isCorrect) {
+        if (chipBtn) chipBtn.classList.add('chip-correct');
+        if (sentenceBlank) {
+            sentenceBlank.innerHTML = `<span class="text-emerald-400 font-extrabold">${choice}</span>`;
+            sentenceBlank.className = 'px-2.5 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-400 font-extrabold text-emerald-300';
+        }
+        score++;
+    } else {
+        if (chipBtn) chipBtn.classList.add('chip-wrong');
+        if (sentenceBlank) {
+            sentenceBlank.innerHTML = `<span class="text-rose-400 font-extrabold">${choice}</span>`;
+            sentenceBlank.className = 'px-2.5 py-0.5 rounded-lg bg-rose-500/20 border border-rose-400 font-extrabold text-rose-300';
+        }
+        wrongAnswers++;
+    }
+
+    attemptHistory.push(isCorrect);
+    showEmojiFeedback(isCorrect);
     updateScoreboardUI();
     updateLivesUI(!isCorrect);
     currentAttempt++;
@@ -1440,16 +1440,16 @@ function endGame(isThreeStrikes = false) {
 
 // Global callback for handwriting symbol recognition
 function onSymbolRecognized(symbol) {
-    if (currentLevel === 2) {
-        handleLevel2Guess(symbol);
-    } else if (currentLevel === 1) {
-        handleLevel2Guess(symbol);
+    if (currentLevel === 1) {
+        handleLevel1Guess(symbol);
+    } else if (currentLevel === 2) {
+        handleLevel1Guess(symbol);
     }
 }
 window.onSymbolRecognized = onSymbolRecognized;
 
 // Close settings modal when clicking outside on dark backdrop
-if (settingsModal) {
+if (settingsModal && settingsModal.addEventListener) {
     settingsModal.addEventListener('click', (e) => {
         if (e.target === settingsModal) {
             closeSettingsModal();

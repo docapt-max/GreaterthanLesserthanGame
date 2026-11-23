@@ -54,10 +54,10 @@
                     </button>
                 </div>
 
-                <!-- Settings Gear Icon (Level 2 only) -->
-                <button id="settings-btn" onclick="openSettingsModal()" aria-label="Level 2 Settings"
+                <!-- Settings Gear Icon (Active on comparison level) -->
+                <button id="settings-btn" onclick="openSettingsModal()" aria-label="Game Settings"
                     class="hidden bg-slate-800/80 p-2 rounded-full border border-slate-600/80 shadow-md text-slate-300 hover:text-white active:scale-95 transition-all items-center justify-center min-w-[38px] min-h-[38px] opacity-60 hover:opacity-100 active:opacity-100 cursor-pointer"
-                    title="Level 2 Settings">
+                    title="Game Settings">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
@@ -143,13 +143,13 @@
         Next ➡️
     </button>
 
-    <!-- Settings Modal (Level 2 Configuration) -->
+    <!-- Settings Modal (Configuration) -->
     <div id="settings-modal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border-2 border-slate-700 rounded-3xl p-5 md:p-6 shadow-[0_0_50px_rgba(0,0,0,0.85)] max-w-md w-full text-white animate-popIn">
             <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
                 <div class="flex items-center gap-2">
                     <span class="text-2xl">⚙️</span>
-                    <h3 class="text-xl font-black text-white">Level 2 Settings</h3>
+                    <h3 class="text-xl font-black text-white">Game Settings</h3>
                 </div>
                 <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-lg font-bold transition-all cursor-pointer">✕</button>
             </div>
