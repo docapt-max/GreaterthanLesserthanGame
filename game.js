@@ -53,8 +53,13 @@ const chipsContainer = document.getElementById('chips-container');
 const questionSentence = document.getElementById('question-sentence');
 const playArea = document.getElementById('play-area');
 const lvlBtn0 = document.getElementById('lvl-btn-0');
+const lvlBtn05 = document.getElementById('lvl-btn-05');
 const lvlBtn1 = document.getElementById('lvl-btn-1');
 const lvlBtn2 = document.getElementById('lvl-btn-2');
+const leftColumn = document.getElementById('left-column');
+const rightColumn = document.getElementById('right-column');
+const level05PromptContainer = document.getElementById('level05-prompt-container');
+const level05PromptText = document.getElementById('level05-prompt-text');
 const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const settingsHint = document.getElementById('settings-hint');
@@ -216,6 +221,7 @@ function updateLevelButtonsUI() {
     const inactiveClasses = 'px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center';
 
     if (lvlBtn0) lvlBtn0.className = (currentLevel === 0) ? activeClasses : inactiveClasses;
+    if (lvlBtn05) lvlBtn05.className = (currentLevel === 0.5) ? activeClasses : inactiveClasses;
     if (lvlBtn1) lvlBtn1.className = (currentLevel === 1) ? activeClasses : inactiveClasses;
     if (lvlBtn2) lvlBtn2.className = (currentLevel === 2) ? activeClasses : inactiveClasses;
     if (settingsBtn) settingsBtn.style.display = (currentLevel === 0 || currentLevel === 1) ? 'inline-flex' : 'none';
@@ -717,6 +723,9 @@ function startGame() {
     const canvasCard = document.getElementById('canvas-card');
 
     if (currentLevel === 0) {
+        if (leftColumn) leftColumn.style.display = 'flex';
+        if (rightColumn) rightColumn.style.display = 'flex';
+        if (level05PromptContainer) level05PromptContainer.style.display = 'none';
         questionSentence.style.display = 'none';
         chipsContainer.style.display = 'flex';
         if (smallBoxLeft) smallBoxLeft.style.display = 'none';
@@ -728,6 +737,7 @@ function startGame() {
             if (centerCol) {
                 centerCol.style.display = 'flex';
                 centerCol.classList.add('center-col-level0');
+                centerCol.classList.remove('center-col-level05');
             }
             if (btnClearCanvas) btnClearCanvas.style.display = 'none';
             if (canvasCard) canvasCard.style.display = 'none';
@@ -735,16 +745,45 @@ function startGame() {
         } else {
             if (centerCol) {
                 centerCol.style.display = 'none';
-                centerCol.classList.remove('center-col-level0');
+                centerCol.classList.remove('center-col-level0', 'center-col-level05');
             }
             if (centerSlot) centerSlot.style.display = 'none';
         }
         roundPool = generateBalancedPool(['left-small', 'left-big']);
-    } else if (currentLevel === 1) {
-        // Level 1: Quantities / Numbers (<, >) with Handwriting Recognition Canvas & Settings
+    } else if (currentLevel === 0.5) {
+        // Level 0.5: Child is presented with "greater than", "lesser than", or "equal to" text and writes the symbol
+        if (leftColumn) leftColumn.style.display = 'none';
+        if (rightColumn) rightColumn.style.display = 'none';
+        if (smallBoxLeft) smallBoxLeft.style.display = 'none';
+        if (smallBoxRight) smallBoxRight.style.display = 'none';
+        if (chipsContainer) chipsContainer.style.display = 'none';
+        questionSentence.style.display = 'none';
+        if (settingsBtn) settingsBtn.style.display = 'none';
+
         if (centerCol) {
             centerCol.style.display = 'flex';
             centerCol.classList.remove('center-col-level0');
+            centerCol.classList.add('center-col-level05');
+        }
+        if (level05PromptContainer) level05PromptContainer.style.display = 'flex';
+        if (btnClearCanvas) btnClearCanvas.style.display = 'flex';
+        if (canvasCard) canvasCard.style.display = 'flex';
+        if (centerSlot) centerSlot.style.display = 'none';
+
+        if (window.HandwritingCanvas) {
+            window.HandwritingCanvas.enable();
+            window.HandwritingCanvas.clear();
+            window.HandwritingCanvas.resize();
+        }
+        roundPool = generateBalancedPool(['greater than', 'lesser than', 'equal to']);
+    } else if (currentLevel === 1) {
+        // Level 1: Quantities / Numbers (<, >) with Handwriting Recognition Canvas & Settings
+        if (leftColumn) leftColumn.style.display = 'flex';
+        if (rightColumn) rightColumn.style.display = 'flex';
+        if (level05PromptContainer) level05PromptContainer.style.display = 'none';
+        if (centerCol) {
+            centerCol.style.display = 'flex';
+            centerCol.classList.remove('center-col-level0', 'center-col-level05');
         }
         if (btnClearCanvas) btnClearCanvas.style.display = 'flex';
         if (canvasCard) canvasCard.style.display = 'flex';
@@ -763,9 +802,12 @@ function startGame() {
         roundPool = generateBalancedPool(['<', '>']);
     } else {
         // Level 2: Geometric Shapes (bigger / smaller)
+        if (leftColumn) leftColumn.style.display = 'flex';
+        if (rightColumn) rightColumn.style.display = 'flex';
+        if (level05PromptContainer) level05PromptContainer.style.display = 'none';
         if (centerCol) {
             centerCol.style.display = 'none';
-            centerCol.classList.remove('center-col-level0');
+            centerCol.classList.remove('center-col-level0', 'center-col-level05');
         }
         if (centerSlot) centerSlot.style.display = 'none';
 
@@ -818,6 +860,8 @@ function nextRound() {
 
     if (currentLevel === 0) {
         setupLevel0Round();
+    } else if (currentLevel === 0.5) {
+        setupLevel05Round();
     } else if (currentLevel === 1) {
         setupLevel1Round();
     } else {
@@ -1339,6 +1383,94 @@ function checkLevel0SignAnswer() {
     }, 450);
 }
 
+// Level 0.5 Target state
+let level05Target = '';
+
+// Setup Level 0.5: Child is presented with "greater than", "lesser than", or "equal to" text
+function setupLevel05Round() {
+    isAnsweringBlocked = false;
+    isWaitingForNext = false;
+
+    // Pick target from balanced 10-item pool
+    level05Target = roundPool[currentAttempt] || (['greater than', 'lesser than', 'equal to'][Math.floor(Math.random() * 3)]);
+
+    const promptText = document.getElementById('level05-prompt-text');
+    if (promptText) {
+        promptText.textContent = level05Target;
+        promptText.className = 'text-2xl md:text-4xl lg:text-5xl font-black px-6 py-2.5 rounded-2xl bg-slate-800/95 border-2 shadow-lg tracking-wide transition-all';
+        if (level05Target === 'greater than') {
+            promptText.classList.add('text-amber-300', 'border-amber-400/60', 'drop-shadow-[0_4px_16px_rgba(245,158,11,0.4)]');
+        } else if (level05Target === 'lesser than') {
+            promptText.classList.add('text-sky-300', 'border-sky-400/60', 'drop-shadow-[0_4px_16px_rgba(56,189,248,0.4)]');
+        } else {
+            promptText.classList.add('text-emerald-300', 'border-emerald-400/60', 'drop-shadow-[0_4px_16px_rgba(52,211,153,0.4)]');
+        }
+    }
+
+    const canvasCard = document.getElementById('canvas-card');
+    if (canvasCard) {
+        canvasCard.classList.remove('canvas-success', 'canvas-shake');
+    }
+
+    if (window.HandwritingCanvas) {
+        window.HandwritingCanvas.clear();
+        window.HandwritingCanvas.enable();
+        window.HandwritingCanvas.resize();
+    }
+}
+
+// Handle handwriting recognition symbol in Level 0.5
+function handleLevel05Guess(symbol) {
+    if (isAnsweringBlocked) return;
+    isAnsweringBlocked = true;
+
+    if (window.HandwritingCanvas) {
+        window.HandwritingCanvas.disable();
+    }
+
+    let isCorrect = false;
+    if (level05Target === 'greater than' && symbol === '>') {
+        isCorrect = true;
+    } else if (level05Target === 'lesser than' && symbol === '<') {
+        isCorrect = true;
+    } else if (level05Target === 'equal to' && symbol === '=') {
+        isCorrect = true;
+    }
+
+    const canvasCard = document.getElementById('canvas-card');
+    const promptText = document.getElementById('level05-prompt-text');
+
+    if (isCorrect) {
+        score++;
+        if (canvasCard) {
+            canvasCard.classList.add('canvas-success');
+        }
+        if (promptText) {
+            promptText.classList.remove('border-amber-400/60', 'border-sky-400/60');
+            promptText.classList.add('border-emerald-400', 'text-emerald-300', 'shadow-[0_0_20px_rgba(16,185,129,0.5)]');
+        }
+    } else {
+        wrongAnswers++;
+        if (canvasCard) {
+            canvasCard.classList.add('canvas-shake');
+        }
+        if (promptText) {
+            promptText.classList.remove('border-amber-400/60', 'border-sky-400/60', 'border-emerald-400/60');
+            promptText.classList.add('border-rose-400', 'text-rose-300', 'shadow-[0_0_20px_rgba(244,63,94,0.5)]');
+        }
+    }
+
+    attemptHistory.push(isCorrect);
+    showEmojiFeedback(isCorrect);
+    updateScoreboardUI();
+    updateLivesUI(!isCorrect);
+    currentAttempt++;
+
+    setTimeout(() => {
+        showNextPrompt();
+    }, 450);
+}
+
 // Setup Level 1: Quantities / Numbers (1 Digit: Vertical one.png Stack | 2 or 3 Digits: Place Value Blocks)
 function setupLevel1Round() {
     const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.5 ? '<' : '>');
@@ -1780,16 +1912,21 @@ function endGame(isThreeStrikes = false) {
 
     let nextLvlBtnHtml = '';
     if (currentLevel === 0) {
-        nextLvlBtnHtml = `<button onclick="switchLevel(1)" class="w-full min-h-[52px] py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 1 ➡️</button>`;
+        nextLvlBtnHtml = `<button onclick="switchLevel(0.5)" class="w-full min-h-[52px] py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 0.5 ➡️</button>`;
+    } else if (currentLevel === 0.5) {
+        nextLvlBtnHtml = `
+            <button onclick="switchLevel(1)" class="w-full min-h-[52px] py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 1 ➡️</button>
+            <button onclick="switchLevel(0)" class="w-full min-h-[52px] py-3.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 0 ⬅️</button>
+        `;
     } else if (currentLevel === 1) {
         nextLvlBtnHtml = `
             <button onclick="switchLevel(2)" class="w-full min-h-[52px] py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 2 ➡️</button>
-            <button onclick="switchLevel(0)" class="w-full min-h-[52px] py-3.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 0 ⬅️</button>
+            <button onclick="switchLevel(0.5)" class="w-full min-h-[52px] py-3.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 0.5 ⬅️</button>
         `;
     } else {
         nextLvlBtnHtml = `
             <button onclick="switchLevel(1)" class="w-full min-h-[52px] py-3.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 1 ⬅️</button>
-            <button onclick="switchLevel(0)" class="w-full min-h-[52px] py-3.5 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 0 ⬅️</button>
+            <button onclick="switchLevel(0.5)" class="w-full min-h-[52px] py-3.5 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 active:scale-95 rounded-2xl text-white text-lg md:text-xl font-bold shadow-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center">Play Level 0.5 ⬅️</button>
         `;
     }
 
@@ -1808,7 +1945,9 @@ function endGame(isThreeStrikes = false) {
 
 // Global callback for handwriting symbol recognition
 function onSymbolRecognized(symbol) {
-    if (currentLevel === 1) {
+    if (currentLevel === 0.5) {
+        handleLevel05Guess(symbol);
+    } else if (currentLevel === 1) {
         handleLevel1Guess(symbol);
     } else if (currentLevel === 2) {
         handleLevel1Guess(symbol);

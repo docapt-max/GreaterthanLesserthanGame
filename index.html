@@ -41,15 +41,19 @@
                 <div id="level-switcher"
                     class="flex items-center bg-slate-800/80 p-1 rounded-full border border-slate-600/80 shadow-md select-none backdrop-blur-sm gap-1 opacity-50 hover:opacity-100 active:opacity-100 transition-opacity">
                     <button id="lvl-btn-0" onclick="switchLevel(0)"
-                        class="px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-md flex items-center justify-center">
+                        class="px-2.5 py-1 md:px-3.5 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-md flex items-center justify-center">
                         Level 0
                     </button>
+                    <button id="lvl-btn-05" onclick="switchLevel(0.5)"
+                        class="px-2.5 py-1 md:px-3.5 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center">
+                        Level 0.5
+                    </button>
                     <button id="lvl-btn-1" onclick="switchLevel(1)"
-                        class="px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center">
+                        class="px-2.5 py-1 md:px-3.5 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center">
                         Level 1
                     </button>
                     <button id="lvl-btn-2" onclick="switchLevel(2)"
-                        class="px-3.5 py-1 md:px-4 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center">
+                        class="px-2.5 py-1 md:px-3.5 md:py-1.5 min-h-[38px] rounded-full text-xs md:text-sm font-extrabold transition-all cursor-pointer text-slate-300 hover:text-white flex items-center justify-center">
                         Level 2
                     </button>
                 </div>
@@ -104,24 +108,32 @@
             </div>
         </div>
 
-        <!-- Middle Column: Handwriting Recognition Canvas (Level 1 only) & Center Drop Slot (Level 0 greater-lesser mode) -->
+        <!-- Middle Column: Handwriting Recognition Canvas (Level 0.5 & Level 1) & Center Drop Slot (Level 0 greater-lesser mode) -->
         <div id="center-col"
             class="hidden flex-col items-center justify-end z-20 shrink-0 self-end mb-0.5">
-            <!-- Manual Clear Button (Above the Box - Level 1) -->
+            <!-- Level 0.5 Prompt Container: Presented with "greater than", "lesser than", or "equal to" -->
+            <div id="level05-prompt-container" class="hidden flex-col items-center justify-center mb-3 text-center select-none">
+                <span class="text-xs md:text-sm font-black uppercase tracking-widest text-indigo-300/80 mb-1">Write the symbol for</span>
+                <div id="level05-prompt-text" class="text-2xl md:text-4xl lg:text-5xl font-black text-amber-300 drop-shadow-[0_4px_16px_rgba(245,158,11,0.4)] px-6 py-2.5 rounded-2xl bg-slate-800/95 border-2 border-amber-400/60 shadow-lg tracking-wide transition-all">
+                    <!-- Injected by JS: "greater than", "lesser than", or "equal to" -->
+                </div>
+            </div>
+
+            <!-- Manual Clear Button (Above the Box - Level 0.5 & Level 1) -->
             <button id="btn-clear-canvas" type="button" aria-label="Clear drawing"
                 class="mb-3 md:mb-3.5 px-3.5 py-1 bg-slate-800/90 hover:bg-slate-700 active:bg-slate-900 active:scale-95 text-indigo-200 hover:text-white text-xs md:text-sm font-extrabold rounded-full border border-indigo-400/50 shadow-sm transition-all flex items-center gap-1 cursor-pointer select-none">
                 <span>⌫</span> Clear
             </button>
-            <!-- Canvas Writing Card (Level 1) -->
+            <!-- Canvas Writing Card (Level 0.5 & Level 1) -->
             <div id="canvas-card"
                 class="relative w-44 h-32 md:w-48 md:h-36 bg-slate-800/95 rounded-2xl border-4 border-indigo-400/90 shadow-[0_4px_20px_rgba(0,0,0,0.5),0_0_15px_rgba(99,102,241,0.3)] overflow-hidden flex items-center justify-center transition-all">
-                <!-- 6 Blue Guide Dots (3 along the left and 3 along the right along the short axis, 70% transparency) -->
+                <!-- 6 Guide Dots: Blue endpoints and Orange center dots on either side (70% transparency) -->
                 <div id="canvas-guide-dots" class="absolute inset-0 pointer-events-none select-none z-0">
                     <span class="guide-dot dot-tl" aria-hidden="true"></span>
-                    <span class="guide-dot dot-ml" aria-hidden="true"></span>
+                    <span class="guide-dot dot-ml dot-orange" aria-hidden="true"></span>
                     <span class="guide-dot dot-bl" aria-hidden="true"></span>
                     <span class="guide-dot dot-tr" aria-hidden="true"></span>
-                    <span class="guide-dot dot-mr" aria-hidden="true"></span>
+                    <span class="guide-dot dot-mr dot-orange" aria-hidden="true"></span>
                     <span class="guide-dot dot-br" aria-hidden="true"></span>
                 </div>
                 <canvas id="handwriting-canvas" class="relative z-10 w-full h-full cursor-crosshair" style="touch-action: none;"></canvas>

@@ -596,6 +596,15 @@ button, .chip-btn, .setting-pill, #btn-clear-canvas, #lvl-btn-0, #lvl-btn-1, #lv
     pointer-events: none;
 }
 
+/* The center dot on either side is orange with the same 70% transparency in both Level 0.5 and Level 1 */
+.guide-dot.dot-orange,
+.guide-dot.dot-ml,
+.guide-dot.dot-mr {
+    background-color: #f97316; /* Vibrant orange */
+    opacity: 0.7; /* Same 70% transparency */
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.8), 0 0 2px rgba(255, 255, 255, 0.4);
+}
+
 /* 3 dots along the left (short axis) */
 .guide-dot.dot-tl { top: 24%; left: 22%; }
 .guide-dot.dot-ml { top: 50%; left: 22%; }
@@ -605,6 +614,24 @@ button, .chip-btn, .setting-pill, #btn-clear-canvas, #lvl-btn-0, #lvl-btn-1, #lv
 .guide-dot.dot-tr { top: 24%; left: 78%; }
 .guide-dot.dot-mr { top: 50%; left: 78%; }
 .guide-dot.dot-br { top: 76%; left: 78%; }
+
+/* Level 0.5 Centered Layout & Prompt Card */
+.center-col-level05 {
+    align-self: center !important;
+    margin: auto !important;
+    padding-bottom: 0.5rem;
+}
+
+#level05-prompt-container {
+    animation: shapePopIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+#level05-prompt-text {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: 0.03em;
+    min-width: 220px;
+    text-align: center;
+}
 
 /* Place Value Board & Base-Ten Blocks (Level 1) */
 .place-value-board {
