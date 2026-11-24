@@ -104,15 +104,15 @@
             </div>
         </div>
 
-        <!-- Middle Column: Handwriting Recognition Canvas (Level 1 only: in between the two small numbers) -->
+        <!-- Middle Column: Handwriting Recognition Canvas (Level 1 only) & Center Drop Slot (Level 0 greater-lesser mode) -->
         <div id="center-col"
             class="hidden flex-col items-center justify-end z-20 shrink-0 self-end mb-0.5">
-            <!-- Manual Clear Button (Above the Box) -->
+            <!-- Manual Clear Button (Above the Box - Level 1) -->
             <button id="btn-clear-canvas" type="button" aria-label="Clear drawing"
                 class="mb-3 md:mb-3.5 px-3.5 py-1 bg-slate-800/90 hover:bg-slate-700 active:bg-slate-900 active:scale-95 text-indigo-200 hover:text-white text-xs md:text-sm font-extrabold rounded-full border border-indigo-400/50 shadow-sm transition-all flex items-center gap-1 cursor-pointer select-none">
                 <span>⌫</span> Clear
             </button>
-            <!-- Canvas Writing Card -->
+            <!-- Canvas Writing Card (Level 1) -->
             <div id="canvas-card"
                 class="relative w-44 h-32 md:w-48 md:h-36 bg-slate-800/95 rounded-2xl border-4 border-indigo-400/90 shadow-[0_4px_20px_rgba(0,0,0,0.5),0_0_15px_rgba(99,102,241,0.3)] overflow-hidden flex items-center justify-center transition-all">
                 <!-- 6 Blue Guide Dots (3 along the left and 3 along the right along the short axis, 70% transparency) -->
@@ -125,6 +125,10 @@
                     <span class="guide-dot dot-br" aria-hidden="true"></span>
                 </div>
                 <canvas id="handwriting-canvas" class="relative z-10 w-full h-full cursor-crosshair" style="touch-action: none;"></canvas>
+            </div>
+            <!-- Center Drop Slot (Level 0 Greater-Lesser Mode: between the 2 big boxes) -->
+            <div id="level0-center-slot" class="hidden level0-center-drop-slot">
+                <span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none text-center px-2">Drop Symbol Here</span>
             </div>
         </div>
 
@@ -158,58 +162,89 @@
             <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
                 <div class="flex items-center gap-2">
                     <span class="text-2xl">⚙️</span>
-                    <h3 class="text-xl font-black text-white">Game Settings</h3>
+                    <h3 id="settings-title" class="text-xl font-black text-white">Game Settings</h3>
                 </div>
                 <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-lg font-bold transition-all cursor-pointer">✕</button>
             </div>
 
-            <!-- Option 1: Digits -->
-            <div class="mb-4">
-                <label class="block text-xs font-black uppercase tracking-wider text-indigo-300 mb-2">Number of Digits</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button id="opt-digit-1" onclick="selectDigitSetting(1)" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
-                        <span class="text-base font-black">1 Digit</span>
-                        <span class="text-[10px] text-indigo-200/80 font-medium mt-0.5">Unit Cubes 🧊</span>
-                    </button>
-                    <button id="opt-digit-2" onclick="selectDigitSetting(2)" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
-                        <span class="text-base font-black">2 Digits</span>
-                        <span class="text-[10px] text-indigo-200/80 font-medium mt-0.5">Tens &amp; Ones 🔟</span>
-                    </button>
-                    <button id="opt-digit-3" onclick="selectDigitSetting(3)" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
-                        <span class="text-base font-black">3 Digits</span>
-                        <span class="text-[10px] text-indigo-200/80 font-medium mt-0.5">Hundreds, Tens, Ones 💯</span>
-                    </button>
+            <!-- Level 0 Settings Content: Comparison Mode -->
+            <div id="settings-content-level0" class="hidden">
+                <div class="mb-4">
+                    <label class="block text-xs font-black uppercase tracking-wider text-indigo-300 mb-2">Comparison Mode</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="opt-l0-big-small" onclick="selectLevel0ModeSetting('big-small')" class="setting-pill flex flex-col items-center justify-center py-3 px-3 rounded-2xl border-2 transition-all cursor-pointer">
+                            <span class="text-base font-black">Big &amp; Small</span>
+                            <span class="text-[11px] text-indigo-200/80 font-medium mt-1">Word Chips (Default)</span>
+                        </button>
+                        <button id="opt-l0-greater-lesser" onclick="selectLevel0ModeSetting('greater-lesser')" class="setting-pill flex flex-col items-center justify-center py-3 px-3 rounded-2xl border-2 transition-all cursor-pointer">
+                            <span class="text-base font-black">Greater &amp; Lesser</span>
+                            <span class="text-[11px] text-indigo-200/80 font-medium mt-1">&gt; and &lt; Sign Chips</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dynamic Hint Box for Level 0 -->
+                <div id="settings-hint-level0" class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-xs text-indigo-200 mb-5 leading-relaxed">
+                    <!-- Injected dynamically -->
+                </div>
+
+                <!-- Action Buttons for Level 0 -->
+                <div class="flex gap-2.5">
+                    <button onclick="closeSettingsModal()" class="flex-1 min-h-[46px] py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-bold text-sm transition-all cursor-pointer">Cancel</button>
+                    <button onclick="saveAndApplyLevel0Settings()" class="flex-1 min-h-[46px] py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 active:scale-95 text-white font-extrabold text-sm shadow-lg transition-all cursor-pointer">Save &amp; Play 🎮</button>
                 </div>
             </div>
 
-            <!-- Option 2: Difficulty Mode -->
-            <div class="mb-4">
-                <label class="block text-xs font-black uppercase tracking-wider text-indigo-300 mb-2">Difficulty Mode</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button id="opt-diff-easy" onclick="selectDifficultySetting('easy')" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
-                        <span class="text-base font-black text-emerald-400">Easy</span>
-                        <span class="text-[10px] text-slate-300 font-medium mt-0.5">Starter</span>
-                    </button>
-                    <button id="opt-diff-medium" onclick="selectDifficultySetting('medium')" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
-                        <span class="text-base font-black text-amber-400">Medium</span>
-                        <span class="text-[10px] text-slate-300 font-medium mt-0.5">Tens Place</span>
-                    </button>
-                    <button id="opt-diff-hard" onclick="selectDifficultySetting('hard')" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
-                        <span class="text-base font-black text-rose-400">Hard</span>
-                        <span class="text-[10px] text-slate-300 font-medium mt-0.5">Ones Place</span>
-                    </button>
+            <!-- Level 1 Settings Content: Digits & Difficulty -->
+            <div id="settings-content-level1">
+                <!-- Option 1: Digits -->
+                <div class="mb-4">
+                    <label class="block text-xs font-black uppercase tracking-wider text-indigo-300 mb-2">Number of Digits</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button id="opt-digit-1" onclick="selectDigitSetting(1)" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
+                            <span class="text-base font-black">1 Digit</span>
+                            <span class="text-[10px] text-indigo-200/80 font-medium mt-0.5">Unit Cubes 🧊</span>
+                        </button>
+                        <button id="opt-digit-2" onclick="selectDigitSetting(2)" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
+                            <span class="text-base font-black">2 Digits</span>
+                            <span class="text-[10px] text-indigo-200/80 font-medium mt-0.5">Tens &amp; Ones 🔟</span>
+                        </button>
+                        <button id="opt-digit-3" onclick="selectDigitSetting(3)" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
+                            <span class="text-base font-black">3 Digits</span>
+                            <span class="text-[10px] text-indigo-200/80 font-medium mt-0.5">Hundreds, Tens, Ones 💯</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Dynamic Hint / Explanation Box -->
-            <div id="settings-hint" class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-xs text-indigo-200 mb-5 leading-relaxed">
-                <!-- Injected dynamically -->
-            </div>
+                <!-- Option 2: Difficulty Mode -->
+                <div class="mb-4">
+                    <label class="block text-xs font-black uppercase tracking-wider text-indigo-300 mb-2">Difficulty Mode</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button id="opt-diff-easy" onclick="selectDifficultySetting('easy')" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
+                            <span class="text-base font-black text-emerald-400">Easy</span>
+                            <span class="text-[10px] text-slate-300 font-medium mt-0.5">Starter</span>
+                        </button>
+                        <button id="opt-diff-medium" onclick="selectDifficultySetting('medium')" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
+                            <span class="text-base font-black text-amber-400">Medium</span>
+                            <span class="text-[10px] text-slate-300 font-medium mt-0.5">Tens Place</span>
+                        </button>
+                        <button id="opt-diff-hard" onclick="selectDifficultySetting('hard')" class="setting-pill flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer">
+                            <span class="text-base font-black text-rose-400">Hard</span>
+                            <span class="text-[10px] text-slate-300 font-medium mt-0.5">Ones Place</span>
+                        </button>
+                    </div>
+                </div>
 
-            <!-- Action Buttons -->
-            <div class="flex gap-2.5">
-                <button onclick="closeSettingsModal()" class="flex-1 min-h-[46px] py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-bold text-sm transition-all cursor-pointer">Cancel</button>
-                <button onclick="saveAndApplySettings()" class="flex-1 min-h-[46px] py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 active:scale-95 text-white font-extrabold text-sm shadow-lg transition-all cursor-pointer">Save &amp; Play 🎮</button>
+                <!-- Dynamic Hint / Explanation Box -->
+                <div id="settings-hint" class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-xs text-indigo-200 mb-5 leading-relaxed">
+                    <!-- Injected dynamically -->
+                </div>
+
+                <!-- Action Buttons for Level 1 -->
+                <div class="flex gap-2.5">
+                    <button onclick="closeSettingsModal()" class="flex-1 min-h-[46px] py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-bold text-sm transition-all cursor-pointer">Cancel</button>
+                    <button onclick="saveAndApplySettings()" class="flex-1 min-h-[46px] py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 active:scale-95 text-white font-extrabold text-sm shadow-lg transition-all cursor-pointer">Save &amp; Play 🎮</button>
+                </div>
             </div>
         </div>
     </div>

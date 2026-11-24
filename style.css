@@ -366,6 +366,137 @@ button, .chip-btn, .setting-pill, #btn-clear-canvas, #lvl-btn-0, #lvl-btn-1, #lv
     box-shadow: 0 0 22px rgba(99, 102, 241, 0.65);
 }
 
+/* Center column alignment in Level 0 Greater-Lesser Mode */
+#center-col.center-col-level0 {
+    align-self: center !important;
+    justify-content: center !important;
+    margin-bottom: 0 !important;
+}
+
+/* Level 0 Greater-Lesser Center Drop Slot */
+.level0-center-drop-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 136px;
+    height: 136px;
+    border-radius: 1.5rem;
+    border: 3px dashed rgba(129, 140, 248, 0.55);
+    background: rgba(30, 41, 59, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(99, 102, 241, 0.15);
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    z-index: 20;
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .level0-center-drop-slot {
+        width: 108px;
+        height: 108px;
+        border-radius: 1.25rem;
+    }
+}
+
+.level0-center-drop-slot.slot-hover {
+    border-color: #818cf8;
+    background: rgba(99, 102, 241, 0.3);
+    transform: scale(1.08);
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.8), inset 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+.level0-center-drop-slot.slot-correct {
+    border-color: #10b981 !important;
+    border-style: solid !important;
+    background: rgba(16, 185, 129, 0.25) !important;
+    box-shadow: 0 0 35px rgba(16, 185, 129, 0.8) !important;
+}
+
+.level0-center-drop-slot.slot-wrong {
+    border-color: #f43f5e !important;
+    border-style: solid !important;
+    background: rgba(244, 63, 94, 0.25) !important;
+    box-shadow: 0 0 35px rgba(244, 63, 94, 0.8) !important;
+    animation: shake 0.45s ease-in-out;
+}
+
+/* Sign Image Chips (Level 0 Greater-Lesser Mode) */
+.sign-chip-btn {
+    min-width: 108px;
+    min-height: 80px;
+    padding: 6px 14px;
+    border-radius: 1.25rem;
+    background: rgba(30, 41, 59, 0.95);
+    border: 2.5px solid rgba(129, 140, 248, 0.85);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(99, 102, 241, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    touch-action: none;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@media (max-width: 768px) {
+    .sign-chip-btn {
+        min-width: 90px;
+        min-height: 68px;
+        padding: 4px 10px;
+    }
+}
+
+.sign-chip-btn:hover {
+    border-color: #a5b4fc;
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.55);
+    transform: translateY(-2px);
+}
+
+.sign-chip-btn:active {
+    transform: scale(0.95);
+}
+
+.sign-chip-btn.chip-selected {
+    border-color: #38bdf8;
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.85);
+    transform: scale(1.05);
+}
+
+.sign-chip-img {
+    width: 80px;
+    height: 72px;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+    .sign-chip-img {
+        width: 62px;
+        height: 56px;
+    }
+}
+
+.sign-drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000;
+    transform: translate(-50%, -50%) scale(1.1);
+    border-radius: 1.25rem;
+    padding: 8px 12px;
+    background: rgba(49, 46, 129, 0.95);
+    border: 3px solid #818cf8;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(99, 102, 241, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .box-hover-active {
     border-color: #818cf8 !important;
     box-shadow: 0 0 30px rgba(99, 102, 241, 0.5), inset 0 0 25px rgba(99, 102, 241, 0.2) !important;

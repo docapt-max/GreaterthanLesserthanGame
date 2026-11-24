@@ -16,9 +16,15 @@ let samePositionStreak = 0;
 let isAnsweringBlocked = false;
 let isWaitingForNext = false;
 
-// Level 0 Variables
+// Level 0 Variables & Settings (Default: Big & Small Mode)
+const level0Settings = {
+    mode: 'big-small' // 'big-small' (default) or 'greater-lesser'
+};
+let pendingLevel0Mode = 'big-small';
 let level0Targets = { left: '', right: '' };
+let level0TargetSymbol = null; // '<' or '>' in greater-lesser mode
 let placedChips = { left: null, right: null };
+let placedLevel0Sign = null;
 let selectedChip = null;
 
 // Level 2 Variables (Quantities)
@@ -212,7 +218,7 @@ function updateLevelButtonsUI() {
     if (lvlBtn0) lvlBtn0.className = (currentLevel === 0) ? activeClasses : inactiveClasses;
     if (lvlBtn1) lvlBtn1.className = (currentLevel === 1) ? activeClasses : inactiveClasses;
     if (lvlBtn2) lvlBtn2.className = (currentLevel === 2) ? activeClasses : inactiveClasses;
-    if (settingsBtn) settingsBtn.style.display = (currentLevel === 1) ? 'inline-flex' : 'none';
+    if (settingsBtn) settingsBtn.style.display = (currentLevel === 0 || currentLevel === 1) ? 'inline-flex' : 'none';
 }
 
 // Switch between Level 0, Level 1, and Level 2
@@ -234,17 +240,23 @@ function loadSettings() {
         if (['easy', 'medium', 'hard'].includes(savedDiff)) {
             level2Settings.difficulty = savedDiff;
         }
+        const savedL0Mode = localStorage.getItem('gt_lt_l0_mode');
+        if (['big-small', 'greater-lesser'].includes(savedL0Mode)) {
+            level0Settings.mode = savedL0Mode;
+        }
     } catch (e) {
         console.warn('Could not load settings from localStorage', e);
     }
     pendingDigits = level2Settings.digits;
     pendingDifficulty = level2Settings.difficulty;
+    pendingLevel0Mode = level0Settings.mode;
 }
 
 function saveSettings() {
     try {
         localStorage.setItem('gt_lt_l2_digits', level2Settings.digits);
         localStorage.setItem('gt_lt_l2_difficulty', level2Settings.difficulty);
+        localStorage.setItem('gt_lt_l0_mode', level0Settings.mode);
     } catch (e) {
         console.warn('Could not save settings to localStorage', e);
     }
@@ -252,9 +264,25 @@ function saveSettings() {
 
 // Settings Modal UI Handlers
 function openSettingsModal() {
-    pendingDigits = level2Settings.digits;
-    pendingDifficulty = level2Settings.difficulty;
-    updateSettingsUI();
+    const modalTitle = document.getElementById('settings-title');
+    const contentL0 = document.getElementById('settings-content-level0');
+    const contentL1 = document.getElementById('settings-content-level1');
+
+    if (currentLevel === 0) {
+        if (modalTitle) modalTitle.textContent = 'Level 0 Settings';
+        if (contentL0) contentL0.classList.remove('hidden');
+        if (contentL1) contentL1.classList.add('hidden');
+        pendingLevel0Mode = level0Settings.mode;
+        updateLevel0SettingsUI();
+    } else {
+        if (modalTitle) modalTitle.textContent = 'Level 1 Settings';
+        if (contentL0) contentL0.classList.add('hidden');
+        if (contentL1) contentL1.classList.remove('hidden');
+        pendingDigits = level2Settings.digits;
+        pendingDifficulty = level2Settings.difficulty;
+        updateSettingsUI();
+    }
+
     if (settingsModal) {
         settingsModal.classList.remove('hidden');
     }
@@ -266,6 +294,50 @@ function closeSettingsModal() {
     }
 }
 
+// Level 0 Settings Handlers
+function selectLevel0ModeSetting(mode) {
+    pendingLevel0Mode = mode;
+    updateLevel0SettingsUI();
+}
+
+function updateLevel0SettingsUI() {
+    const btnBigSmall = document.getElementById('opt-l0-big-small');
+    const btnGreaterLesser = document.getElementById('opt-l0-greater-lesser');
+    const hintL0 = document.getElementById('settings-hint-level0');
+
+    if (btnBigSmall) {
+        if (pendingLevel0Mode === 'big-small') {
+            btnBigSmall.classList.add('setting-pill-active');
+        } else {
+            btnBigSmall.classList.remove('setting-pill-active');
+        }
+    }
+    if (btnGreaterLesser) {
+        if (pendingLevel0Mode === 'greater-lesser') {
+            btnGreaterLesser.classList.add('setting-pill-active');
+        } else {
+            btnGreaterLesser.classList.remove('setting-pill-active');
+        }
+    }
+    if (hintL0) {
+        if (pendingLevel0Mode === 'big-small') {
+            hintL0.innerHTML = '🔤 <b>Big &amp; Small Mode (Default)</b>: Two boxes contain shapes with stark size contrast. Child drags or taps <b>big</b> and <b>small</b> word chips onto each box.';
+        } else {
+            hintL0.innerHTML = '📐 <b>Greater &amp; Lesser Mode</b>: Child compares the shapes in both boxes and drops the correct mathematical symbol (<b>&gt;</b> or <b>&lt;</b>) into the area between them!';
+        }
+    }
+}
+
+function saveAndApplyLevel0Settings() {
+    level0Settings.mode = pendingLevel0Mode;
+    saveSettings();
+    closeSettingsModal();
+    if (currentLevel === 0) {
+        startGame();
+    }
+}
+
+// Level 1 Settings Handlers
 function selectDigitSetting(d) {
     pendingDigits = d;
     updateSettingsUI();
@@ -621,6 +693,7 @@ function startGame() {
     isAnsweringBlocked = false;
     isWaitingForNext = false;
     placedChips = { left: null, right: null };
+    placedLevel0Sign = null;
     selectedChip = null;
 
     // Reset Next Button & Scoreboard Tap State
@@ -639,18 +712,44 @@ function startGame() {
     }
 
     // Configure UI based on Level
+    const centerSlot = document.getElementById('level0-center-slot');
+    const btnClearCanvas = document.getElementById('btn-clear-canvas');
+    const canvasCard = document.getElementById('canvas-card');
+
     if (currentLevel === 0) {
-        if (centerCol) centerCol.style.display = 'none';
         questionSentence.style.display = 'none';
         chipsContainer.style.display = 'flex';
         if (smallBoxLeft) smallBoxLeft.style.display = 'none';
         if (smallBoxRight) smallBoxRight.style.display = 'none';
-        if (settingsBtn) settingsBtn.style.display = 'none';
+        if (settingsBtn) settingsBtn.style.display = 'inline-flex';
         if (window.HandwritingCanvas) window.HandwritingCanvas.disable();
+
+        if (level0Settings.mode === 'greater-lesser') {
+            if (centerCol) {
+                centerCol.style.display = 'flex';
+                centerCol.classList.add('center-col-level0');
+            }
+            if (btnClearCanvas) btnClearCanvas.style.display = 'none';
+            if (canvasCard) canvasCard.style.display = 'none';
+            if (centerSlot) centerSlot.style.display = 'flex';
+        } else {
+            if (centerCol) {
+                centerCol.style.display = 'none';
+                centerCol.classList.remove('center-col-level0');
+            }
+            if (centerSlot) centerSlot.style.display = 'none';
+        }
         roundPool = generateBalancedPool(['left-small', 'left-big']);
     } else if (currentLevel === 1) {
         // Level 1: Quantities / Numbers (<, >) with Handwriting Recognition Canvas & Settings
-        if (centerCol) centerCol.style.display = 'flex';
+        if (centerCol) {
+            centerCol.style.display = 'flex';
+            centerCol.classList.remove('center-col-level0');
+        }
+        if (btnClearCanvas) btnClearCanvas.style.display = 'flex';
+        if (canvasCard) canvasCard.style.display = 'flex';
+        if (centerSlot) centerSlot.style.display = 'none';
+
         questionSentence.style.display = 'none'; // Uncluttered sketch layout
         chipsContainer.style.display = 'none';
         if (smallBoxLeft) smallBoxLeft.style.display = 'flex';
@@ -664,7 +763,12 @@ function startGame() {
         roundPool = generateBalancedPool(['<', '>']);
     } else {
         // Level 2: Geometric Shapes (bigger / smaller)
-        if (centerCol) centerCol.style.display = 'none';
+        if (centerCol) {
+            centerCol.style.display = 'none';
+            centerCol.classList.remove('center-col-level0');
+        }
+        if (centerSlot) centerSlot.style.display = 'none';
+
         questionSentence.style.display = 'block';
         chipsContainer.style.display = 'flex';
         if (smallBoxLeft) smallBoxLeft.style.display = 'none';
@@ -690,6 +794,20 @@ function nextRound() {
     rightContainer.className = 'relative flex-1 w-full game-board bg-slate-800 rounded-3xl overflow-hidden border-4 border-slate-600 flex items-center justify-center';
     countedLeft = 0;
     countedRight = 0;
+    placedChips = { left: null, right: null };
+    selectedChip = null;
+    placedLevel0Sign = null;
+
+    const centerSlot = document.getElementById('level0-center-slot');
+    if (centerSlot) {
+        centerSlot.className = 'level0-center-drop-slot';
+        centerSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none text-center px-2">Drop Symbol Here</span>`;
+        if (currentLevel === 0 && level0Settings.mode === 'greater-lesser') {
+            centerSlot.style.display = 'flex';
+        } else {
+            centerSlot.style.display = 'none';
+        }
+    }
 
     if (smallBoxLeft) {
         smallBoxLeft.className = 'self-end mt-1.5 md:mt-2 px-4 py-1 md:px-5 md:py-1.5 min-w-[76px] md:min-w-[88px] h-11 md:h-12 bg-slate-800/95 rounded-2xl border-4 border-indigo-400/90 shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] flex items-center justify-center text-2xl md:text-3xl font-black text-indigo-100 select-none z-10 transition-all';
@@ -707,9 +825,9 @@ function nextRound() {
     }
 }
 
-// Setup Level 0: Geometric Shapes with Drag and Drop "small" and "big" chips
+// Setup Level 0: Geometric Shapes Comparison (Big-Small Mode or Greater-Lesser Mode)
 function setupLevel0Round() {
-    // 1. Pick geometric shape (circle, square, equilateral triangle, pentagon)
+    // 1. Pick geometric shape (circle, square, rectangle, bar, triangle, pentagon)
     const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
 
     // 2. Pick 2 different colors
@@ -728,61 +846,102 @@ function setupLevel0Round() {
         leftSize = smallSize;
         rightSize = bigSize;
         level0Targets = { left: 'small', right: 'big' };
+        level0TargetSymbol = '<';
     } else {
         leftSize = bigSize;
         rightSize = smallSize;
         level0Targets = { left: 'big', right: 'small' };
+        level0TargetSymbol = '>';
     }
 
     placedChips = { left: null, right: null };
     selectedChip = null;
+    placedLevel0Sign = null;
 
-    // 5. Render Shapes in Boxes (with top padding to center nicely below top drop slot)
-    const leftWrapper = document.createElement('div');
-    leftWrapper.className = 'shape-container pt-8 md:pt-10';
-    leftWrapper.innerHTML = shape.render(leftColor.hex, leftSize);
-    leftContainer.appendChild(leftWrapper);
+    if (level0Settings.mode === 'greater-lesser') {
+        // --- GREATER & LESSER MODE ---
+        // Render Shapes centered in boxes without top drop slots
+        const leftWrapper = document.createElement('div');
+        leftWrapper.className = 'shape-container';
+        leftWrapper.innerHTML = shape.render(leftColor.hex, leftSize);
+        leftContainer.appendChild(leftWrapper);
 
-    const rightWrapper = document.createElement('div');
-    rightWrapper.className = 'shape-container pt-8 md:pt-10';
-    rightWrapper.innerHTML = shape.render(rightColor.hex, rightSize);
-    rightContainer.appendChild(rightWrapper);
+        const rightWrapper = document.createElement('div');
+        rightWrapper.className = 'shape-container';
+        rightWrapper.innerHTML = shape.render(rightColor.hex, rightSize);
+        rightContainer.appendChild(rightWrapper);
 
-    // 6. Create Drop Slots inside Boxes at center top
-    const leftSlot = document.createElement('div');
-    leftSlot.id = 'drop-slot-left';
-    leftSlot.className = 'level0-drop-slot';
-    leftSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here</span>`;
-    leftSlot.onclick = (e) => {
-        e.stopPropagation();
-        handleSlotClick('left');
-    };
-    leftContainer.appendChild(leftSlot);
+        // Center slot reset
+        const centerSlot = document.getElementById('level0-center-slot');
+        if (centerSlot) {
+            centerSlot.className = 'level0-center-drop-slot';
+            centerSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none text-center px-2">Drop Symbol Here</span>`;
+        }
 
-    const rightSlot = document.createElement('div');
-    rightSlot.id = 'drop-slot-right';
-    rightSlot.className = 'level0-drop-slot';
-    rightSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here</span>`;
-    rightSlot.onclick = (e) => {
-        e.stopPropagation();
-        handleSlotClick('right');
-    };
-    rightContainer.appendChild(rightSlot);
+        // Render Greater and Lesser sign chips with images in chipsContainer in random order
+        chipsContainer.innerHTML = '';
+        const signChoices = Math.random() < 0.5 ? ['>', '<'] : ['<', '>'];
 
-    // 7. Render "small" and "big" chips in chipsContainer with random order
-    chipsContainer.innerHTML = '';
-    const chipChoices = Math.random() < 0.5 ? ['small', 'big'] : ['big', 'small'];
+        signChoices.forEach(sign => {
+            const btn = document.createElement('button');
+            btn.className = 'chip-btn sign-chip-btn draggable-chip';
+            btn.dataset.sign = sign;
+            const imgSrc = sign === '>' ? 'media/GreaterThanSign.jpg' : 'media/LesserThanSign.jpg';
+            btn.innerHTML = `<img src="${imgSrc}" class="sign-chip-img" alt="${sign}" draggable="false">`;
 
-    chipChoices.forEach(choice => {
-        const btn = document.createElement('button');
-        btn.className = 'chip-btn draggable-chip min-h-[52px] px-8 py-2.5 md:px-11 md:py-3.5 rounded-full text-xl md:text-2xl font-black bg-slate-800/95 text-indigo-100 hover:text-white border-2 border-indigo-400/90 shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.5)] active:scale-95 transition-all select-none backdrop-blur-sm flex items-center justify-center gap-2';
-        btn.dataset.chip = choice;
-        btn.innerHTML = `<span>${choice}</span>`;
+            btn.addEventListener('pointerdown', (e) => initLevel0SignDrag(e, sign, btn));
 
-        btn.addEventListener('pointerdown', (e) => initChipDrag(e, choice, btn));
+            chipsContainer.appendChild(btn);
+        });
+    } else {
+        // --- BIG & SMALL MODE (DEFAULT) ---
+        // Render Shapes in Boxes (with top padding to center nicely below top drop slot)
+        const leftWrapper = document.createElement('div');
+        leftWrapper.className = 'shape-container pt-8 md:pt-10';
+        leftWrapper.innerHTML = shape.render(leftColor.hex, leftSize);
+        leftContainer.appendChild(leftWrapper);
 
-        chipsContainer.appendChild(btn);
-    });
+        const rightWrapper = document.createElement('div');
+        rightWrapper.className = 'shape-container pt-8 md:pt-10';
+        rightWrapper.innerHTML = shape.render(rightColor.hex, rightSize);
+        rightContainer.appendChild(rightWrapper);
+
+        // Create Drop Slots inside Boxes at center top
+        const leftSlot = document.createElement('div');
+        leftSlot.id = 'drop-slot-left';
+        leftSlot.className = 'level0-drop-slot';
+        leftSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here</span>`;
+        leftSlot.onclick = (e) => {
+            e.stopPropagation();
+            handleSlotClick('left');
+        };
+        leftContainer.appendChild(leftSlot);
+
+        const rightSlot = document.createElement('div');
+        rightSlot.id = 'drop-slot-right';
+        rightSlot.className = 'level0-drop-slot';
+        rightSlot.innerHTML = `<span class="text-xs md:text-sm font-extrabold text-indigo-300/80 pointer-events-none select-none">Drop here</span>`;
+        rightSlot.onclick = (e) => {
+            e.stopPropagation();
+            handleSlotClick('right');
+        };
+        rightContainer.appendChild(rightSlot);
+
+        // Render "small" and "big" chips in chipsContainer with random order
+        chipsContainer.innerHTML = '';
+        const chipChoices = Math.random() < 0.5 ? ['small', 'big'] : ['big', 'small'];
+
+        chipChoices.forEach(choice => {
+            const btn = document.createElement('button');
+            btn.className = 'chip-btn draggable-chip min-h-[52px] px-8 py-2.5 md:px-11 md:py-3.5 rounded-full text-xl md:text-2xl font-black bg-slate-800/95 text-indigo-100 hover:text-white border-2 border-indigo-400/90 shadow-[0_6px_20px_rgba(0,0,0,0.4),0_0_15px_rgba(99,102,241,0.3)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.5)] active:scale-95 transition-all select-none backdrop-blur-sm flex items-center justify-center gap-2';
+            btn.dataset.chip = choice;
+            btn.innerHTML = `<span>${choice}</span>`;
+
+            btn.addEventListener('pointerdown', (e) => initChipDrag(e, choice, btn));
+
+            chipsContainer.appendChild(btn);
+        });
+    }
 }
 
 // Level 0 Drag & Drop and Tap Helpers
@@ -1034,6 +1193,138 @@ function checkLevel0Answer() {
 
         if (!isLeftCorrect) leftContainer.classList.add('box-wrong');
         if (!isRightCorrect) rightContainer.classList.add('box-wrong');
+        wrongAnswers++;
+    }
+
+    attemptHistory.push(isCorrect);
+    showEmojiFeedback(isCorrect);
+    updateScoreboardUI();
+    updateLivesUI(!isCorrect);
+    currentAttempt++;
+
+    setTimeout(() => {
+        showNextPrompt();
+    }, 450);
+}
+
+// Level 0 Greater-Lesser Mode Helpers (Sign Drag & Drop and Tap)
+function initLevel0SignDrag(e, sign, chipBtn) {
+    if (isAnsweringBlocked) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let isDragging = false;
+    let ghostEl = null;
+    const centerSlot = document.getElementById('level0-center-slot');
+
+    function onPointerMove(moveEvent) {
+        const curX = moveEvent.clientX;
+        const curY = moveEvent.clientY;
+
+        if (!isDragging) {
+            if (Math.hypot(curX - startX, curY - startY) > 6) {
+                isDragging = true;
+                ghostEl = document.createElement('div');
+                ghostEl.className = 'sign-drag-ghost';
+                const imgSrc = sign === '>' ? 'media/GreaterThanSign.jpg' : 'media/LesserThanSign.jpg';
+                ghostEl.innerHTML = `<img src="${imgSrc}" class="sign-chip-img" alt="${sign}">`;
+                ghostEl.style.left = `${curX}px`;
+                ghostEl.style.top = `${curY}px`;
+                document.body.appendChild(ghostEl);
+
+                if (chipBtn) chipBtn.style.opacity = '0.3';
+            }
+        }
+
+        if (isDragging && ghostEl) {
+            ghostEl.style.left = `${curX}px`;
+            ghostEl.style.top = `${curY}px`;
+
+            const isOverCenter = isPointInElement(curX, curY, centerSlot, 25);
+            if (centerSlot) {
+                if (isOverCenter) {
+                    centerSlot.classList.add('slot-hover');
+                } else {
+                    centerSlot.classList.remove('slot-hover');
+                }
+            }
+        }
+    }
+
+    function onPointerUp(upEvent) {
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+
+        if (centerSlot) centerSlot.classList.remove('slot-hover');
+
+        if (isDragging) {
+            if (ghostEl) {
+                ghostEl.remove();
+                ghostEl = null;
+            }
+            if (chipBtn) chipBtn.style.opacity = '1';
+
+            const endX = upEvent.clientX;
+            const endY = upEvent.clientY;
+            if (isPointInElement(endX, endY, centerSlot, 25)) {
+                placeLevel0Sign(sign);
+            }
+        } else {
+            handleLevel0SignTap(sign, chipBtn);
+        }
+    }
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+}
+
+function handleLevel0SignTap(sign, chipBtn) {
+    if (isAnsweringBlocked) return;
+    placeLevel0Sign(sign);
+}
+
+function placeLevel0Sign(sign) {
+    if (isAnsweringBlocked) return;
+    placedLevel0Sign = sign;
+
+    const centerSlot = document.getElementById('level0-center-slot');
+    if (!centerSlot) return;
+
+    const imgSrc = sign === '>' ? 'media/GreaterThanSign.jpg' : 'media/LesserThanSign.jpg';
+    centerSlot.innerHTML = `<img src="${imgSrc}" class="sign-chip-img" alt="${sign}">`;
+
+    const signBtns = chipsContainer.querySelectorAll('.sign-chip-btn');
+    signBtns.forEach(btn => {
+        if (btn.dataset.sign === sign) {
+            btn.classList.add('chip-selected');
+        } else {
+            btn.classList.remove('chip-selected');
+        }
+    });
+
+    checkLevel0SignAnswer();
+}
+
+function checkLevel0SignAnswer() {
+    if (isAnsweringBlocked) return;
+    isAnsweringBlocked = true;
+
+    const centerSlot = document.getElementById('level0-center-slot');
+    const isCorrect = (placedLevel0Sign === level0TargetSymbol);
+
+    if (isCorrect) {
+        if (centerSlot) centerSlot.classList.add('slot-correct');
+        leftContainer.classList.add('box-correct');
+        rightContainer.classList.add('box-correct');
+        score++;
+    } else {
+        if (centerSlot) centerSlot.classList.add('slot-wrong');
+        leftContainer.classList.add('box-wrong');
+        rightContainer.classList.add('box-wrong');
         wrongAnswers++;
     }
 
