@@ -9,6 +9,7 @@ const HandwritingCanvas = (function () {
     let card = null;
     let hint = null;
     let clearBtn = null;
+    let submitBtn = null;
 
     let isEnabled = true;
     let isDrawing = false;
@@ -29,6 +30,7 @@ const HandwritingCanvas = (function () {
         card = document.getElementById(options.cardId || 'canvas-card');
         hint = document.getElementById(options.hintId || 'canvas-hint');
         clearBtn = document.getElementById(options.clearBtnId || 'btn-clear-canvas');
+        submitBtn = document.getElementById(options.submitBtnId || 'btn-submit-canvas');
 
         if (options.onSymbolRecognized) {
             onSymbolRecognizedCallback = options.onSymbolRecognized;
@@ -53,6 +55,20 @@ const HandwritingCanvas = (function () {
                 clear();
             });
         }
+
+        if (submitBtn) {
+            submitBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                submit();
+            });
+        }
+
+        // Enter key shortcut for desktop users
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                submit();
+            }
+        });
     }
 
     /**
@@ -185,15 +201,9 @@ const HandwritingCanvas = (function () {
 
         redrawAllStrokes();
 
-        if (strokes.length > 0) {
-            // Auto-evaluate 450ms after the last pointerup event
-            if (evalTimer) clearTimeout(evalTimer);
-            evalTimer = setTimeout(() => {
-                evaluateDrawing();
-            }, 450);
-        } else {
+        if (strokes.length === 0 && hint) {
             // If all strokes were discarded, restore hint
-            if (hint) hint.style.opacity = '1';
+            hint.style.opacity = '1';
         }
     }
 
@@ -535,6 +545,26 @@ const HandwritingCanvas = (function () {
     }
 
     /**
+     * Submit manual drawing: evaluates the current strokes on the canvas.
+     */
+    function submit() {
+        if (!isEnabled || isDrawing) return;
+        if (strokes.length === 0) {
+            // If nothing has been drawn, gently shake the card as a subtle prompt
+            if (card) {
+                card.classList.remove('canvas-shake');
+                void card.offsetWidth;
+                card.classList.add('canvas-shake');
+                setTimeout(() => {
+                    if (card) card.classList.remove('canvas-shake');
+                }, 300);
+            }
+            return;
+        }
+        evaluateDrawing();
+    }
+
+    /**
      * Subtle audio feedback on rejection.
      */
     function playRejectionSound() {
@@ -581,6 +611,8 @@ const HandwritingCanvas = (function () {
     function enable() {
         isEnabled = true;
         if (canvas) canvas.style.pointerEvents = 'auto';
+        if (clearBtn) clearBtn.disabled = false;
+        if (submitBtn) submitBtn.disabled = false;
     }
 
     function disable() {
@@ -590,6 +622,8 @@ const HandwritingCanvas = (function () {
             evalTimer = null;
         }
         if (canvas) canvas.style.pointerEvents = 'none';
+        if (clearBtn) clearBtn.disabled = true;
+        if (submitBtn) submitBtn.disabled = true;
     }
 
     function setOnSymbolRecognized(fn) {
@@ -599,6 +633,7 @@ const HandwritingCanvas = (function () {
     return {
         init,
         clear,
+        submit,
         enable,
         disable,
         resize: resizeCanvas,

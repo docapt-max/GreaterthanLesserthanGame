@@ -118,11 +118,17 @@
                 </div>
             </div>
 
-            <!-- Manual Clear Button (Above the Box - Level 0.5 & Level 1) -->
-            <button id="btn-clear-canvas" type="button" aria-label="Clear drawing"
-                class="mb-3 md:mb-3.5 px-3.5 py-1 bg-slate-800/90 hover:bg-slate-700 active:bg-slate-900 active:scale-95 text-indigo-200 hover:text-white text-xs md:text-sm font-extrabold rounded-full border border-indigo-400/50 shadow-sm transition-all flex items-center gap-1 cursor-pointer select-none">
-                <span>⌫</span> Clear
-            </button>
+            <!-- Canvas Action Bar: Clear & Submit Buttons (Level 0.5 & Level 1) -->
+            <div id="canvas-action-bar" class="flex items-center justify-center gap-2.5 md:gap-3 mb-2.5 md:mb-3 select-none">
+                <button id="btn-clear-canvas" type="button" aria-label="Clear drawing"
+                    class="px-3.5 py-1.5 md:px-4 md:py-1.5 bg-slate-800/90 hover:bg-slate-700 active:bg-slate-900 active:scale-95 text-indigo-200 hover:text-white text-xs md:text-sm font-extrabold rounded-full border border-indigo-400/50 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer select-none">
+                    <span>⌫</span> Clear
+                </button>
+                <button id="btn-submit-canvas" type="button" aria-label="Submit drawing"
+                    class="px-4 py-1.5 md:px-5 md:py-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-95 text-white text-xs md:text-sm font-black rounded-full border border-emerald-400/70 shadow-[0_2px_12px_rgba(16,185,129,0.35)] transition-all flex items-center gap-1.5 cursor-pointer select-none">
+                    <span>✓</span> Submit
+                </button>
+            </div>
             <!-- Canvas Writing Card (Level 0.5 & Level 1) -->
             <div id="canvas-card"
                 class="relative w-44 h-32 md:w-48 md:h-36 bg-slate-800/95 rounded-2xl border-4 border-indigo-400/90 shadow-[0_4px_20px_rgba(0,0,0,0.5),0_0_15px_rgba(99,102,241,0.3)] overflow-hidden flex items-center justify-center transition-all">

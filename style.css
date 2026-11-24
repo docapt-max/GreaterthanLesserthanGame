@@ -23,13 +23,19 @@ body {
 }
 
 /* Optimized Touch Targets & Touch Feel for iPad 10.2" Landscape */
-button, .chip-btn, .setting-pill, #btn-clear-canvas, #lvl-btn-0, #lvl-btn-1, #lvl-btn-2, #settings-btn {
+button, .chip-btn, .setting-pill, #btn-clear-canvas, #btn-submit-canvas, #lvl-btn-0, #lvl-btn-05, #lvl-btn-1, #lvl-btn-2, #settings-btn {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
     cursor: pointer;
+}
+
+#btn-submit-canvas:disabled, #btn-clear-canvas:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 /* Settings Pill Active / Inactive States */

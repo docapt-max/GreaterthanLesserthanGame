@@ -720,6 +720,8 @@ function startGame() {
     // Configure UI based on Level
     const centerSlot = document.getElementById('level0-center-slot');
     const btnClearCanvas = document.getElementById('btn-clear-canvas');
+    const btnSubmitCanvas = document.getElementById('btn-submit-canvas');
+    const canvasActionBar = document.getElementById('canvas-action-bar');
     const canvasCard = document.getElementById('canvas-card');
 
     if (currentLevel === 0) {
@@ -739,7 +741,9 @@ function startGame() {
                 centerCol.classList.add('center-col-level0');
                 centerCol.classList.remove('center-col-level05');
             }
+            if (canvasActionBar) canvasActionBar.style.display = 'none';
             if (btnClearCanvas) btnClearCanvas.style.display = 'none';
+            if (btnSubmitCanvas) btnSubmitCanvas.style.display = 'none';
             if (canvasCard) canvasCard.style.display = 'none';
             if (centerSlot) centerSlot.style.display = 'flex';
         } else {
@@ -766,7 +770,9 @@ function startGame() {
             centerCol.classList.add('center-col-level05');
         }
         if (level05PromptContainer) level05PromptContainer.style.display = 'flex';
+        if (canvasActionBar) canvasActionBar.style.display = 'flex';
         if (btnClearCanvas) btnClearCanvas.style.display = 'flex';
+        if (btnSubmitCanvas) btnSubmitCanvas.style.display = 'flex';
         if (canvasCard) canvasCard.style.display = 'flex';
         if (centerSlot) centerSlot.style.display = 'none';
 
@@ -785,7 +791,9 @@ function startGame() {
             centerCol.style.display = 'flex';
             centerCol.classList.remove('center-col-level0', 'center-col-level05');
         }
+        if (canvasActionBar) canvasActionBar.style.display = 'flex';
         if (btnClearCanvas) btnClearCanvas.style.display = 'flex';
+        if (btnSubmitCanvas) btnSubmitCanvas.style.display = 'flex';
         if (canvasCard) canvasCard.style.display = 'flex';
         if (centerSlot) centerSlot.style.display = 'none';
 
@@ -1397,14 +1405,8 @@ function setupLevel05Round() {
     const promptText = document.getElementById('level05-prompt-text');
     if (promptText) {
         promptText.textContent = level05Target;
-        promptText.className = 'text-2xl md:text-4xl lg:text-5xl font-black px-7 py-3 rounded-2xl bg-slate-800/95 border-2 shadow-lg transition-all flex items-center justify-center text-center';
-        if (level05Target === 'greater than') {
-            promptText.classList.add('text-amber-300', 'border-amber-400/60', 'drop-shadow-[0_4px_16px_rgba(245,158,11,0.4)]');
-        } else if (level05Target === 'lesser than') {
-            promptText.classList.add('text-sky-300', 'border-sky-400/60', 'drop-shadow-[0_4px_16px_rgba(56,189,248,0.4)]');
-        } else {
-            promptText.classList.add('text-emerald-300', 'border-emerald-400/60', 'drop-shadow-[0_4px_16px_rgba(52,211,153,0.4)]');
-        }
+        // Keep consistent amber styling across "greater than", "lesser than", and "equal to" so the child reads the text rather than guessing by color
+        promptText.className = 'text-2xl md:text-4xl lg:text-5xl font-black px-7 py-3 rounded-2xl bg-slate-800/95 border-2 border-amber-400/60 text-amber-300 drop-shadow-[0_4px_16px_rgba(245,158,11,0.4)] shadow-lg transition-all flex items-center justify-center text-center';
     }
 
     const canvasCard = document.getElementById('canvas-card');
@@ -1973,6 +1975,7 @@ window.onload = () => {
             cardId: 'canvas-card',
             hintId: 'canvas-hint',
             clearBtnId: 'btn-clear-canvas',
+            submitBtnId: 'btn-submit-canvas',
             onSymbolRecognized: function (symbol) {
                 onSymbolRecognized(symbol);
             }
