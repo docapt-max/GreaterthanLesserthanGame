@@ -1397,7 +1397,7 @@ function setupLevel05Round() {
     const promptText = document.getElementById('level05-prompt-text');
     if (promptText) {
         promptText.textContent = level05Target;
-        promptText.className = 'text-2xl md:text-4xl lg:text-5xl font-black px-6 py-2.5 rounded-2xl bg-slate-800/95 border-2 shadow-lg tracking-wide transition-all';
+        promptText.className = 'text-2xl md:text-4xl lg:text-5xl font-black px-7 py-3 rounded-2xl bg-slate-800/95 border-2 shadow-lg transition-all flex items-center justify-center text-center';
         if (level05Target === 'greater than') {
             promptText.classList.add('text-amber-300', 'border-amber-400/60', 'drop-shadow-[0_4px_16px_rgba(245,158,11,0.4)]');
         } else if (level05Target === 'lesser than') {

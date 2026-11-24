@@ -623,14 +623,24 @@ button, .chip-btn, .setting-pill, #btn-clear-canvas, #lvl-btn-0, #lvl-btn-1, #lv
 }
 
 #level05-prompt-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     animation: shapePopIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
 #level05-prompt-text {
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    letter-spacing: 0.03em;
-    min-width: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: normal;
+    line-height: 1.2;
+    min-width: 260px;
+    box-sizing: border-box;
 }
 
 /* Place Value Board & Base-Ten Blocks (Level 1) */
