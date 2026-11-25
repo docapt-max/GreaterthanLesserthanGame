@@ -396,19 +396,19 @@ function getSettingsHintText(digits, difficulty) {
         }
     } else if (digits === 2) {
         if (difficulty === 'easy') {
-            return '🔟 <b>2 Digits (Easy)</b>: Different number of Tens rods (e.g. 28 vs 71). Child compares the tens place!';
+            return '🔢 <b>2 Digits (Easy)</b>: Numbers differ in the Tens place (e.g. 28 vs 71). Numbers only!';
         } else if (difficulty === 'medium') {
-            return '🔟 <b>2 Digits (Medium)</b>: Same number of Tens rods, differing only in Ones unit cubes (e.g. 42 vs 48).';
+            return '🔢 <b>2 Digits (Medium)</b>: Same Tens digit, differing in the Ones place (e.g. 42 vs 48). Numbers only!';
         } else {
-            return '🔟 <b>2 Digits (Hard)</b>: Same Tens rods, Ones unit cubes differ by only 1 or 2 (e.g. 57 vs 58).';
+            return '🔢 <b>2 Digits (Hard)</b>: Same Tens digit, Ones digit differs by only 1 or 2 (e.g. 57 vs 58). Numbers only!';
         }
     } else {
         if (difficulty === 'easy') {
-            return '💯 <b>3 Digits (Easy)</b>: Hundreds flats are different (e.g. 245 vs 610). Child compares hundreds!';
+            return '💯 <b>3 Digits (Easy)</b>: Hundreds digit is different (e.g. 245 vs 610). Numbers only!';
         } else if (difficulty === 'medium') {
-            return '💯 <b>3 Digits (Medium)</b>: Same Hundreds flats, but Tens rods and Ones cubes differ (e.g. 427 vs 483).';
+            return '💯 <b>3 Digits (Medium)</b>: Same Hundreds digit, Tens and Ones differ (e.g. 427 vs 483). Numbers only!';
         } else {
-            return '💯 <b>3 Digits (Hard)</b>: Same Hundreds flats and Tens rods, differing only in Ones unit cubes (e.g. 653 vs 658).';
+            return '💯 <b>3 Digits (Hard)</b>: Same Hundreds and Tens digits, differing only in Ones (e.g. 653 vs 658). Numbers only!';
         }
     }
 }
@@ -789,7 +789,12 @@ function startGame() {
         if (level05PromptContainer) level05PromptContainer.style.display = 'none';
         if (centerCol) {
             centerCol.style.display = 'flex';
-            centerCol.classList.remove('center-col-level0', 'center-col-level05');
+            centerCol.classList.remove('center-col-level05');
+            if (level2Settings.digits === 1) {
+                centerCol.classList.remove('center-col-level0');
+            } else {
+                centerCol.classList.add('center-col-level0');
+            }
         }
         if (canvasActionBar) canvasActionBar.style.display = 'flex';
         if (btnClearCanvas) btnClearCanvas.style.display = 'flex';
@@ -799,8 +804,8 @@ function startGame() {
 
         questionSentence.style.display = 'none'; // Uncluttered sketch layout
         chipsContainer.style.display = 'none';
-        if (smallBoxLeft) smallBoxLeft.style.display = 'flex';
-        if (smallBoxRight) smallBoxRight.style.display = 'flex';
+        if (smallBoxLeft) smallBoxLeft.style.display = (level2Settings.digits === 1) ? 'flex' : 'none';
+        if (smallBoxRight) smallBoxRight.style.display = (level2Settings.digits === 1) ? 'flex' : 'none';
         if (settingsBtn) settingsBtn.style.display = 'inline-flex';
         if (window.HandwritingCanvas) {
             window.HandwritingCanvas.enable();
@@ -1473,7 +1478,7 @@ function handleLevel05Guess(symbol) {
     }, 450);
 }
 
-// Setup Level 1: Quantities / Numbers (1 Digit: Vertical one.png Stack | 2 or 3 Digits: Place Value Blocks)
+// Setup Level 1: Quantities / Numbers (1 Digit: Vertical one.png Stack | 2 or 3 Digits: Number Only)
 function setupLevel1Round() {
     const targetOperator = roundPool[currentAttempt] || (Math.random() < 0.5 ? '<' : '>');
     const generated = generateLevel2Numbers(targetOperator);
@@ -1481,27 +1486,29 @@ function setupLevel1Round() {
     rightCount = generated.right;
 
     if (level2Settings.digits === 1) {
-        // 1 Digit Mode: Non-distracting unit cubes stacked vertically (one.png)
+        // 1 Digit Mode: Non-distracting unit cubes stacked vertically (one.png) + small boxes
         renderVerticalUnitStack(leftContainer, leftCount, 'left');
         renderVerticalUnitStack(rightContainer, rightCount, 'right');
+        if (centerCol) centerCol.classList.remove('center-col-level0');
+        if (smallBoxLeft) {
+            smallBoxLeft.style.display = 'flex';
+            smallBoxLeft.textContent = leftCount;
+        }
+        if (smallBoxRight) {
+            smallBoxRight.style.display = 'flex';
+            smallBoxRight.textContent = rightCount;
+        }
     } else {
-        // 2 or 3 Digit Mode: Base-ten place value blocks (hundred.png, ten.png, one.png)
-        renderPlaceValueBlocks(leftContainer, leftCount, 'left');
-        renderPlaceValueBlocks(rightContainer, rightCount, 'right');
+        // 2 or 3 Digit Mode: Show only the number card and the writing box (no cubes or extra boxes)
+        renderNumberCard(leftContainer, leftCount);
+        renderNumberCard(rightContainer, rightCount);
+        if (centerCol) centerCol.classList.add('center-col-level0');
+        if (smallBoxLeft) smallBoxLeft.style.display = 'none';
+        if (smallBoxRight) smallBoxRight.style.display = 'none';
     }
 
     countedLeft = 0;
     countedRight = 0;
-
-    // Small boxes below containers show the counts/numbers
-    if (smallBoxLeft) {
-        smallBoxLeft.style.display = 'flex';
-        smallBoxLeft.textContent = leftCount;
-    }
-    if (smallBoxRight) {
-        smallBoxRight.style.display = 'flex';
-        smallBoxRight.textContent = rightCount;
-    }
 
     // Clear and enable handwriting recognition canvas for player to draw > or <
     if (window.HandwritingCanvas) {
@@ -1708,6 +1715,12 @@ function handleLevel1Guess(operator) {
             smallBoxRight.classList.remove('border-indigo-400/90');
             smallBoxRight.classList.add('border-emerald-400', 'bg-emerald-500/20', 'text-emerald-300', 'shadow-[0_0_20px_rgba(16,185,129,0.5)]');
         }
+        if (level2Settings.digits !== 1) {
+            leftContainer.classList.remove('border-slate-600');
+            leftContainer.classList.add('border-emerald-400', 'shadow-[0_0_20px_rgba(16,185,129,0.4)]');
+            rightContainer.classList.remove('border-slate-600');
+            rightContainer.classList.add('border-emerald-400', 'shadow-[0_0_20px_rgba(16,185,129,0.4)]');
+        }
     } else {
         wrongAnswers++;
         if (smallBoxLeft) {
@@ -1717,6 +1730,12 @@ function handleLevel1Guess(operator) {
         if (smallBoxRight) {
             smallBoxRight.classList.remove('border-indigo-400/90');
             smallBoxRight.classList.add('border-rose-400', 'bg-rose-500/20', 'text-rose-300', 'shadow-[0_0_20px_rgba(244,63,94,0.5)]');
+        }
+        if (level2Settings.digits !== 1) {
+            leftContainer.classList.remove('border-slate-600');
+            leftContainer.classList.add('border-rose-400', 'shadow-[0_0_20px_rgba(244,63,94,0.4)]');
+            rightContainer.classList.remove('border-slate-600');
+            rightContainer.classList.add('border-rose-400', 'shadow-[0_0_20px_rgba(244,63,94,0.4)]');
         }
     }
     attemptHistory.push(isCorrect);

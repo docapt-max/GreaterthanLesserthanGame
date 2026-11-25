@@ -71,7 +71,7 @@ button, .chip-btn, .setting-pill, #btn-clear-canvas, #btn-submit-canvas, #lvl-bt
 }
 
 .number-display {
-    font-size: clamp(4.5rem, 11vw, 8rem);
+    font-size: clamp(3rem, 10vw, 7.5rem);
     font-weight: 900;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     font-variant-numeric: tabular-nums;
